@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
-#include "main.hpp"
+#include "converter_json.hpp"
 
 int main() {
    
-
+    ConverterJSON example;
     return 0;
 }
