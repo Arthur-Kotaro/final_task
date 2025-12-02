@@ -1,0 +1,16 @@
+{
+    "config":
+    {
+        "name":        "SimpleTXTSearchEngine",
+        "version":     "0.1",
+        "max_response": 5
+    },
+    "files":
+    [
+        "../resources/output_Adventures_of_Huckleberry_Fin.txt",
+        "../resources/output_Great_Expectations.txt",
+        "../resources/output_Pride_and_Prejudice.txt",
+        "../resources/output_Time_Machine.txt",
+        "../resources/output_dracula.txt"
+    ]
+}
