@@ -10,8 +10,9 @@ TEST(sample_test_case,sample_test)
 }
 */
 
-int main() {
-   
+int main()
+{
+
     ConverterJSON example;
     return 0;
 }
