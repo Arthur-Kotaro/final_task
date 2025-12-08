@@ -1,5 +1,17 @@
 #include "converter_json.hpp"
-#include <fstream>
+
+void ConverterJSON::txt_version_to_int(const std::string str_app_version, std::vector<int> & int_app_version)
+{
+    unsigned int start_pos = 0;
+    for(unsigned int i = 0; i < str_app_version.length(); ++i)
+    {
+        if(str_app_version[i] == '.')
+        {
+            int_app_version.push_back(stoi(str_app_version.substr(start_pos, i-start_pos-1)));
+            start_pos = i + 1;
+        }
+    }
+}
 
 bool ConverterJSON::check_version()
 {
@@ -8,24 +20,26 @@ bool ConverterJSON::check_version()
     for(int i = 0; i < app_version.length(); ++i)
     {
         if(app_version[i] != '.' && (app_version[i] < 0 || app_version[i] > 0)) return false;
-        if(app_version[i] == '.' && last_is_point) return false;
-        if(app_version == '.')
+        if(app_version[i] == '.' && last_is_point)                              return false;
+        if(app_version[i] == '.')
             last_is_point = true;
         else
             last_is_point = false;
     }
+
     std::vector<int> semantic_vers_from_config;
     std::vector<int> semantic_vers_program;
+    txt_version_to_int(app_version, semantic_vers_from_config);
+    txt_version_to_int(exe_version, semantic_vers_program);
 
-    for(unsigned int i = 0, unsigned int start_pos = 0; i < app_version.length(); ++i)
+//    bool app_newer_than_config = false;
+    unsigned int version_notation_min_length = (semantic_vers_from_config.size() < semantic_vers_program.size()) ? semantic_vers_from_config.size() : semantic_vers_program.size();
+    for (int i = 0; i < version_notation_min_length; ++i)
     {
-        if(app_version[i] = '.')
-        {
-            semantic_vers_from_config.push_back(stoi(app_version.substr(start_pos, i-start_pos-1)));
-            start_pos = i + 1;
-        }
+        if (semantic_vers_program[i] < semantic_vers_from_config[i]) return false;
+//        if (semantic_vers_program[i] > semantic_vers_from_config[i]) app_newer_than_config = true;
     }
-        return true;
+    return true;
 }
 
 
@@ -55,10 +69,10 @@ void ConverterJSON::PutAnswers(std::vector<std::vector<std::pair<int, float>>> a
 ConverterJSON::ConverterJSON()
 {
     std::ifstream config_ifstream(conf_path);
-    if (!config.is_open())
+    if (!config_ifstream.is_open())
     {
-        config.close();
-        throw;
+        config_ifstream.close();
+        throw config_file_not_found_exception();
     }
     else
     {
@@ -66,41 +80,13 @@ ConverterJSON::ConverterJSON()
         app_name = config_dict["config"]["name"];
         app_version = config_dict["config"]["version"];
         config_dict["config"]["max_responses"];
+//        if()                    throw incorrect_config_file_exception(); если в config_dict["config"] ничего нет
+        if(!check_version())    throw incompatible_config_file_exception();
     }
-    //std::ifstream
-//    config.close();
+    config_ifstream.close();
 }
 
 ConverterJSON::~ConverterJSON()
 {
 
 }
-
-
-//class SApplication
-//{
-//    ConverterJSON* ConverterJSON_ptr;
-//    inverted_index* inverted_index_ptr;
-//    search_server* search_server_ptr;
-//public:
-//    SApplication();
-//    ~SApplication();
-//};
-
- SApplication::SApplication()
- {
- 	try
- 	{
- 		// вызвать конструктор класса ConverterJSON. Требуется проверка на исключения
-        ConverterJSON_ptr = new ConverterJSON;
- 	}
- 	catch()
- 	{
-
- 	}
-    catch()
-    {
-
-    }
-
- }

@@ -20,9 +20,10 @@ FetchContent_MakeAvailable(json)
 #enable_testing()
 
 
-set(SOURCES src/main.cpp src/converter_json.cpp inc/converter_json.hpp)
+set(SOURCES src/main.cpp src/converter_json.cpp src/search_server.cpp src/sapplication.cpp)
+set(HEADERS inc/converter_json.hpp inc/search_server.hpp inc/sapplication.hpp)
 
-add_executable(search_engine ${SOURCES})
+add_executable(search_engine ${SOURCES} ${HEADERS})
 target_include_directories(search_engine PUBLIC inc)
 target_link_libraries(search_engine PRIVATE nlohmann_json::nlohmann_json
     #    gtest_main
