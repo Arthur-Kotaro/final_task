@@ -43,7 +43,7 @@ private:
     inverted_index _index;
 
 public:
-    search_server(inverted_index &idx): _index(idx){};
+    search_server(inverted_index &idx);
     std::vector<std::vector<relative_index>> search(const std::vector<std::string>& queries_input);
 
 

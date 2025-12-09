@@ -22,9 +22,10 @@
  	{
         std::cerr << except.what();
  	}
-    catch()
+    catch(const incorrect_config_file_exception & except)
     {
-
+        std::cerr << except.what();
     }
      inverted_index_ptr = new inverted_index;
+     search_server_ptr = new search_server(*inverted_index_ptr);
  }
