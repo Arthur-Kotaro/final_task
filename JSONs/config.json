@@ -3,7 +3,8 @@
     {
         "name":        "SimpleTXTSearchEngine",
         "version":     "0.1",
-        "max_response": 5
+        "max_response": 5,
+        "update_interval": 10
     },
     "files":
     [

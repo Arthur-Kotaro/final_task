@@ -45,18 +45,33 @@ bool ConverterJSON::check_version()
 
 std::vector<std::string> ConverterJSON::GetTextDocuments()
 {
-
+    std::vector<std::string> text_documents;
+    for(const auto & file : files)
+    {
+        std::ifstream txt_file;
+        txt_file.open(file, std::ios::binary);
+        if (txt_file.is_open())
+        {
+            text_documents.emplace_back(std::istreambuf_iterator<char>(txt_file), std::istreambuf_iterator<char>());
+        }
+        txt_file.close();
+    }
+    return text_documents;
 }
 
 
 std::vector<std::string> ConverterJSON::GetRequests()
 {
-
+    std::vector<std::string> requests;
+    /*
+     *
+     */
+    return requests;
 }
 
-int ConverterJSON::GetResponsesLimit()
+unsigned int ConverterJSON::GetResponsesLimit() const
 {
-
+    return max_response;
 }
 
 
@@ -77,11 +92,28 @@ ConverterJSON::ConverterJSON()
     else
     {
         config_ifstream >> config_dict;
-        app_name = config_dict["config"]["name"];
-        app_version = config_dict["config"]["version"];
-        config_dict["config"]["max_responses"];
-//        if()                    throw incorrect_config_file_exception(); если в config_dict["config"] ничего нет
-        if(!check_version())    throw incompatible_config_file_exception();
+        if(!config_dict.contains("config") && config_dict["config"].is_null())
+        {
+            throw empty_config_file_exception();
+        }
+        if(config_dict.contains("name") && !config_dict["name"].is_null())
+            app_name = config_dict["config"]["name"];
+        if(config_dict.contains("version") && !config_dict["version"].is_null())
+        {
+            app_version = config_dict["config"]["version"];
+            if(!check_version())    throw incompatible_config_file_exception();
+        }
+
+        if(config_dict.contains("max_responses") && !config_dict["max_responses"].is_null())
+            max_response = config_dict["config"]["max_responses"];
+        else
+            max_response = DEFAULT_MAX_RESPONSE;
+
+        if(config_dict.contains("update_interval") && !config_dict["update_interval"].is_null())
+            update_interval = config_dict["config"]["update_interval"];
+        else
+            update_interval = DEFAULT_UPDATE_INTERVAL;
+        files = config_dict["files"];
     }
     config_ifstream.close();
 }
