@@ -22,3 +22,8 @@
      inverted_index_ptr = new inverted_index(ConverterJSON_ptr);
      search_server_ptr = new search_server(*inverted_index_ptr);
  }
+
+SApplication::~SApplication()
+{
+
+}

@@ -5,6 +5,8 @@
 #include "converter_json.hpp"
 #include "search_server.hpp"
 
+#define DEBUG
+
 class SApplication
 {
     ConverterJSON* ConverterJSON_ptr;

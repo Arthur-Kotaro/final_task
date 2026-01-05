@@ -29,5 +29,7 @@ target_link_libraries(search_engine PRIVATE nlohmann_json::nlohmann_json
     #    gtest_main
 )
 
+target_link_libraries(search_engine PRIVATE pthread)
+
 #include(GoogleTest)
 #gtest_discover_tests(search_engine)

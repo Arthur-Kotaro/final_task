@@ -1,9 +1,12 @@
 #pragma once
 
-#include <cstddef>
 #include <iostream>
+#include <cstddef>
 #include <string>
 #include <vector>
+#include <future>
+#include <algorithm>
+//#include <thread>
 #include <map>
 //#include <exception>
 #include <fstream>
@@ -25,7 +28,7 @@ struct relative_index
 class inverted_index
 {
 private:
-    std::vector<std::string> docs;                  // каждый объект типа string это список слов из одного файла. Индекс соответствует... например docs[0] = “milk sugar salt”;
+    std::vector<std::string> docs;                  // Каждый объект типа string это список слов из одного файла. Индекс соответствует... например docs[0] = “milk sugar salt”;
     std::map<std::string, std::vector<entry>> * freq_dictionary; // “milk”, {0, 1} “слово из запроса”, {индекс файла из docs, количество вхождений};
     ConverterJSON * converter_json_ptr;
 
@@ -33,7 +36,9 @@ public:
     inverted_index(ConverterJSON * _converter_json);
     ~inverted_index();
 //    void update_document_base(std::vector<std::string> input_docs);
-    std::map<std::string, std::vector<entry>> * separate_indexing(int _doc_id, const std::string & txt_file_content);
+//    static std::map<std::string, std::vector<entry>> * separate_indexing(int _doc_id, const std::string & txt_file_content);
+    static std::unique_ptr<std::map<std::string, std::vector<entry>>> separate_indexing(int _doc_id, const std::string & txt_file_content);
+
     void update_document_base();
     std::vector<entry> get_word_count(const std::string &word);
 };
@@ -45,6 +50,6 @@ private:
     inverted_index _index;
 
 public:
-    search_server(inverted_index &idx);
+    explicit search_server(inverted_index &idx);
     std::vector<std::vector<relative_index>> search(const std::vector<std::string>& queries_input);
 };

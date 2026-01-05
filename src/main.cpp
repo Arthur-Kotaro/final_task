@@ -13,7 +13,7 @@ TEST(sample_test_case,sample_test)
 
 int main()
 {
-    ConverterJSON example;
+    SApplication example;
 
     return 0;
 }
