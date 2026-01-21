@@ -51,7 +51,7 @@ public:
 
 class ConverterJSON
 {
-    nlohmann::json config_dict;
+    nlohmann::json config_dict, requests_dict;
     std::string app_name, app_version;
     unsigned int max_response, update_interval;
     std::vector<std::string> files;

@@ -1,5 +1,5 @@
 #include "search_server.hpp"
-//#define DEBUG
+
 
 inverted_index::inverted_index(ConverterJSON * _converter_json)
 {
@@ -8,13 +8,10 @@ inverted_index::inverted_index(ConverterJSON * _converter_json)
 }
 
 
+
 void inverted_index::update_document_base(std::vector<std::string> input_docs)
 {
-#ifdef DEBUG
-    std::cout << "\n\"inverted_index::update_document_base() \" called\n";
-#endif
     docs = std::move(input_docs);
-
     if(docs.empty()) return;
 //    if(!freq_dictionary->empty()) freq_dictionary->clear();
     std::vector<std::future<std::unique_ptr<std::map<std::string, std::vector<entry>>>>> index_future;
@@ -34,25 +31,13 @@ void inverted_index::update_document_base(std::vector<std::string> input_docs)
     //sort vector in descending order
     std::sort(begin(index_for_each_file), end(index_for_each_file), [](std::unique_ptr<std::map<std::string, std::vector<entry>>> &left, std::unique_ptr<std::map<std::string, std::vector<entry>>> &right) ->bool
     { return  left->size() > right->size();});
-#ifdef DEBUG
-    std::cout << "\n\"After sorting of index_for_each_file vector\"\n";
-    size_t sum = 0;
-    for(size_t i = 0; i < index_for_each_file.size(); ++i)
-    {
-        std::cout << index_for_each_file[i]->size() << ' ';
-        sum += index_for_each_file[i]->size();
-    }
-    std::cout << std::endl << "Sum of map.size() " << sum << std::endl;
-#endif
     //merge maps and free memory
     const unsigned int hardware_threads = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 2;
     merge_auxiliary_maps(index_for_each_file, hardware_threads);
-
-#ifdef DEBUG
-    std::cout << "\nAuxiliary maps merged. Auxiliary maps vector size = " << index_for_each_file.size() << ". Size of resulting map = " << index_for_each_file[0]->size() << ".\n";
-#endif
     freq_dictionary = std::move(index_for_each_file[0]);
 }
+
+
 
 
 std::unique_ptr<std::map<std::string, std::vector<entry>>> inverted_index::separate_indexing(int _doc_id, const std::string & txt_file_content)
@@ -77,6 +62,8 @@ std::unique_ptr<std::map<std::string, std::vector<entry>>> inverted_index::separ
     return separated_map;
 }
 
+
+
 void inverted_index::merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<entry>>>> &auxiliary_maps, const unsigned int hardware_threads)
 {
     if (auxiliary_maps.size() == 1) return;
@@ -96,16 +83,13 @@ void inverted_index::merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<s
         auxiliary_maps.pop_back();
     }
     if (auxiliary_maps.size() > 1)
-    {
         merge_auxiliary_maps(auxiliary_maps, hardware_threads);
-    }
 }
+
+
 
 void inverted_index::merge_two_separated_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<entry>>>> &sep_index_vec, size_t dst, size_t src)
 {
-#ifdef DEBUG
-    std::cout << "\n\"Function inverted_index::merge_separate_map called. Destination index = " << dst << ", source index = " << src << "\"\n";
-#endif
     for (auto it = sep_index_vec[src]->begin();  it != sep_index_vec[src]->end();)
     {
         auto it_next = std::next(it);
@@ -115,12 +99,12 @@ void inverted_index::merge_two_separated_maps(std::vector<std::unique_ptr<std::m
             sep_index_vec[dst]->insert(std::move(tmp));
         }
         else
-        {
             merge_two_sorted_index_vec(sep_index_vec[dst]->operator[](it->first), sep_index_vec[src]->operator[](it->first));
-        }
         it = it_next;
     }
 }
+
+
 
 void inverted_index::merge_two_sorted_index_vec(std::vector<entry> &dst, std::vector<entry> &src)
 {
@@ -139,7 +123,20 @@ void inverted_index::merge_two_sorted_index_vec(std::vector<entry> &dst, std::ve
     dst = std::move(out);
 }
 
-std::vector<entry> inverted_index::get_word_count(const std::string &word)
+
+
+std::vector<entry>& inverted_index::get_word_count(const std::string &word)
 {
-    return {};
+	auto it = freq_dictionary->find(word);
+	return it->second;
 }
+
+
+
+std::vector<std::vector<relative_index>> search_server::search(const std::vector<std::string>& queries_input)
+{
+	std::vector<std::list<search_term>> search_requests;
+
+
+}
+

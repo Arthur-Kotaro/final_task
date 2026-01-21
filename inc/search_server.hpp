@@ -1,14 +1,15 @@
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <future>
+#include <list>
 #include <map>
 #include <utility>
 #include <cstddef>
-#include <algorithm>
 //#include <thread>
 
 #include "converter_json.hpp"
@@ -22,6 +23,12 @@ struct relative_index
 {
     size_t doc_id;
     float rank;
+};
+
+struct search_term
+{
+	std::string term;
+	int count;
 };
 
 
@@ -42,7 +49,7 @@ public:
     explicit inverted_index(ConverterJSON * _converter_json);
     ~inverted_index();
     void update_document_base(std::vector<std::string> input_docs);
-    static std::vector<entry> get_word_count(const std::string &word);
+    std::vector<entry>& get_word_count(const std::string &word);
 };
 
 

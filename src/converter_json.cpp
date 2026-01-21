@@ -1,5 +1,9 @@
 #include "converter_json.hpp"
 
+
+#define DEBUG_REQ
+
+
 void ConverterJSON::txt_version_to_int(const std::string str_app_version, std::vector<int> & int_app_version)
 {
     unsigned int start_pos = 0;
@@ -63,9 +67,29 @@ std::vector<std::string> ConverterJSON::GetTextDocuments()
 std::vector<std::string> ConverterJSON::GetRequests()
 {
     std::vector<std::string> requests;
-    /*
-     *
-     */
+    std::ifstream request_ifstream(req_path);
+    if (!request_ifstream.is_open())
+    {
+   	request_ifstream.close();
+#ifdef DEBUG_REQ
+	std::cout << "requests.json is not open" << std::endl;
+#endif
+    }
+    else
+    {
+	request_ifstream >> requests_dict;
+        if(!requests_dict.contains("requests") && config_dict["requests"].is_null())
+        {
+#ifdef DEBUG_REQ
+	std::cout << "requests.json is empty" << std::endl;
+#endif
+            //throw empty_config_file_exception();
+        }
+	else
+	{
+		requests = requests_dict["requests"];
+	}
+    }
     return requests;
 }
 
