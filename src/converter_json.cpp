@@ -95,7 +95,7 @@ std::vector<std::string> ConverterJSON::GetRequests()
 
 unsigned int ConverterJSON::GetResponsesLimit() const
 {
-    return max_response;
+    return max_responses;
 }
 
 

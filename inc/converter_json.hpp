@@ -53,16 +53,16 @@ class ConverterJSON
 {
     nlohmann::json config_dict, requests_dict;
     std::string app_name, app_version;
-    unsigned int max_response, update_interval;
+    unsigned int max_responses, update_interval;
     std::vector<std::string> files;
 
     bool check_version();
     static void txt_version_to_int(std::string str_app_version, std::vector<int> & int_app_version);
 
 public:
-    std::vector<std::string> GetTextDocuments();    // метод открывает на чтение data-файлы и возвращает vector строк. Одна строка - один файл. Используется для записи в InvertedIndex::docs
-    std::vector<std::string> GetRequests();         // метод открывает на чтение requests.json в каждой строке один запрос (список слов через пробел)
-    [[nodiscard]] unsigned int GetResponsesLimit() const;                        // метод возвращает значение поля max_response, содержащего максимум ответов на каждый запрос
+    std::vector<std::string> GetTextDocuments();
+    std::vector<std::string> GetRequests();
+    [[nodiscard]] unsigned int GetResponsesLimit() const;
     void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
 
 	ConverterJSON();

@@ -16,7 +16,8 @@
 
 struct entry
 {
-    std::size_t doc_id, count;
+    size_t doc_id;
+    size_t count;
 };
 
 struct relative_index
@@ -27,18 +28,16 @@ struct relative_index
 
 struct search_term
 {
-	std::string term;
-	int count;
+    std::string term;
+    int count;
 };
 
 
 class inverted_index
 {
 private:
-    std::vector<std::string> docs;                                                   // Каждый объект типа string это список слов из одного файла. Индекс соответствует... например docs[0] = “milk sugar salt”;
-    std::unique_ptr<std::map<std::string, std::vector<entry>>> freq_dictionary;    // “milk”, {0, 1} “слово из запроса”, {индекс файла из docs, количество вхождений};
-//    std::map<std::string, std::vector<entry>> *freq_dictionary{};
-//    ConverterJSON * converter_json_ptr;
+    std::vector<std::string> docs;
+    std::unique_ptr<std::map<std::string, std::vector<entry>>> freq_dictionary;
 
     static std::unique_ptr<std::map<std::string, std::vector<entry>>> separate_indexing(int _doc_id, const std::string & txt_file_content);
     static void merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<entry>>>> &auxiliary_maps, unsigned int hardware_threads);
@@ -49,16 +48,16 @@ public:
     explicit inverted_index(ConverterJSON * _converter_json);
     ~inverted_index();
     void update_document_base(std::vector<std::string> input_docs);
-    std::vector<entry>& get_word_count(const std::string &word);
+    std::vector<entry> get_word_count(const std::string &word);
 };
 
 
 class search_server
 {
 private:
-    inverted_index & _index;
+	inverted_index* _index;
 
 public:
-    explicit search_server(inverted_index& idx): _index(idx) {}
-    std::vector<std::vector<relative_index>> search(const std::vector<std::string>& queries_input);
+	explicit search_server(inverted_index* idx): _index(idx) {}
+	std::vector<std::vector<relative_index>> search(const std::vector<std::string>& queries_input);
 };

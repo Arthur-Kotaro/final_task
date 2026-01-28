@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.18)
 project(search_engine LANGUAGES CXX)
 
+
+#option(BUILD_TESTING "Build tests" OFF)
 option(BUILD_TESTING "Build tests" ON)
 
 set(CMAKE_CXX_STANDARD 20)

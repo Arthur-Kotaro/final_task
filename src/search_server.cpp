@@ -136,7 +136,53 @@ std::vector<entry>& inverted_index::get_word_count(const std::string &word)
 std::vector<std::vector<relative_index>> search_server::search(const std::vector<std::string>& queries_input)
 {
 	std::vector<std::list<search_term>> search_requests;
+	search_requests.reserve(queries_input.size());
+	for(const auto & line: queries_input)
+	{	
+		if(!line.empty())
+		{
+			std::list<search_term> lst;
+			const char *start    = line.c_str();
+    			const char *end      = start + line.size();
+    			const char *iterator = start;
+    			while (iterator < end)
+    			{
+        			while (iterator < end && ( (*iterator < 'a') || (*iterator > 'z') )) ++iterator;
+        			start = iterator;
+        			while (iterator < end && ( (*iterator >= 'a') && (*iterator <= 'z') )) ++iterator;
+				std::string word(start, iterator);
+			
+				auto it = std::find_if(lst.begin(), lst.end(), [&](const search_term & trm) { return trm.term == word;});
+				if(it == lst.end())
+				{
+					auto tmp = search_term { word, ([&word, this]() -> int { 
+						int num = 0;					
+//						_index->get_word_count(std::string("he"));
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!					
+//						for(auto iter : _index->get_word_count(word))
 
-
+						const auto & entry_vec = _index->get_word_count(word); //ERROR!!!
+						for(const auto & iter : entry_vec)
+							num += iter.count;
+						return num;
+						})()};
+					bool inserted = false;
+					for(auto iter = lst.begin(); iter != lst.end(); ++iter)
+					{
+						if(iter->count >= tmp.count)
+						{
+							lst.insert(iter, tmp);
+							inserted = true;
+							break;
+						}
+					}
+					if(!inserted) lst.push_back(tmp);
+				}
+			}
+			search_requests.push_back(std::move(lst));
+		}
+	}
+	std::vector<std::vector<relative_index>> ret = {{{1, 2},{3, 4}}, {{5, 6}}};
+	return ret;
 }
 
