@@ -3,17 +3,14 @@
 
 inverted_index::inverted_index(ConverterJSON * _converter_json)
 {
-//    converter_json_ptr = _converter_json;
     update_document_base(_converter_json->GetTextDocuments());
 }
-
 
 
 void inverted_index::update_document_base(std::vector<std::string> input_docs)
 {
     docs = std::move(input_docs);
     if(docs.empty()) return;
-//    if(!freq_dictionary->empty()) freq_dictionary->clear();
     std::vector<std::future<std::unique_ptr<std::map<std::string, std::vector<entry>>>>> index_future;
     std::vector<std::unique_ptr<std::map<std::string, std::vector<entry>>>> index_for_each_file;
     index_future.reserve(docs.size());
@@ -38,8 +35,6 @@ void inverted_index::update_document_base(std::vector<std::string> input_docs)
 }
 
 
-
-
 std::unique_ptr<std::map<std::string, std::vector<entry>>> inverted_index::separate_indexing(int _doc_id, const std::string & txt_file_content)
 {
     auto separated_map = std::make_unique<std::map<std::string, std::vector<entry>>>();
@@ -51,7 +46,7 @@ std::unique_ptr<std::map<std::string, std::vector<entry>>> inverted_index::separ
         while (iterator < end && ( (*iterator < 'a') || (*iterator > 'z') )) ++iterator; //skip all symbols except alphabet letters
         start = iterator;
         while (iterator < end && ( (*iterator >= 'a') && (*iterator <= 'z') )) ++iterator;
-//        if(start == iterator) continue;
+        if(start == iterator) continue;
         std::string word(start, iterator);
         auto map_iterator = separated_map->find(word);
         if (map_iterator == separated_map->end())
@@ -87,7 +82,6 @@ void inverted_index::merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<s
 }
 
 
-
 void inverted_index::merge_two_separated_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<entry>>>> &sep_index_vec, size_t dst, size_t src)
 {
     for (auto it = sep_index_vec[src]->begin();  it != sep_index_vec[src]->end();)
@@ -105,7 +99,6 @@ void inverted_index::merge_two_separated_maps(std::vector<std::unique_ptr<std::m
 }
 
 
-
 void inverted_index::merge_two_sorted_index_vec(std::vector<entry> &dst, std::vector<entry> &src)
 {
     if(src.empty()) return;
@@ -115,8 +108,8 @@ void inverted_index::merge_two_sorted_index_vec(std::vector<entry> &dst, std::ve
     size_t i = 0, j = 0;
     while ( i < dst.size() && j < src.size())
     {
-        if(dst[i].doc_id < src[j].doc_id) out.push_back(std::move(dst[i++]));
-        else if (dst[i].doc_id > src[j].doc_id) out.push_back(std::move(src[j++]));
+        if(dst[i].doc_id < src[j].doc_id) out.push_back(dst[i++]);
+        else if (dst[i].doc_id > src[j].doc_id) out.push_back(src[j++]);
     }
     while (i < dst.size()) out.push_back(dst[i++]);
     while (j < src.size()) out.push_back(src[j++]);
@@ -124,65 +117,142 @@ void inverted_index::merge_two_sorted_index_vec(std::vector<entry> &dst, std::ve
 }
 
 
-
-std::vector<entry>& inverted_index::get_word_count(const std::string &word)
+std::vector<entry> inverted_index::get_word_count(const std::string &word) const
 {
 	auto it = freq_dictionary->find(word);
-	return it->second;
+    if (it != freq_dictionary->end())
+        return it->second;
+    else
+        return {};
 }
 
 
-
-std::vector<std::vector<relative_index>> search_server::search(const std::vector<std::string>& queries_input)
+std::vector<std::list<search_term>> search_server::ParseRequest(const std::vector<std::string>& queries_input) const
 {
-	std::vector<std::list<search_term>> search_requests;
-	search_requests.reserve(queries_input.size());
-	for(const auto & line: queries_input)
-	{	
-		if(!line.empty())
-		{
-			std::list<search_term> lst;
-			const char *start    = line.c_str();
-    			const char *end      = start + line.size();
-    			const char *iterator = start;
-    			while (iterator < end)
-    			{
-        			while (iterator < end && ( (*iterator < 'a') || (*iterator > 'z') )) ++iterator;
-        			start = iterator;
-        			while (iterator < end && ( (*iterator >= 'a') && (*iterator <= 'z') )) ++iterator;
-				std::string word(start, iterator);
-			
-				auto it = std::find_if(lst.begin(), lst.end(), [&](const search_term & trm) { return trm.term == word;});
-				if(it == lst.end())
-				{
-					auto tmp = search_term { word, ([&word, this]() -> int { 
-						int num = 0;					
-//						_index->get_word_count(std::string("he"));
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!					
-//						for(auto iter : _index->get_word_count(word))
-
-						const auto & entry_vec = _index->get_word_count(word); //ERROR!!!
-						for(const auto & iter : entry_vec)
-							num += iter.count;
-						return num;
-						})()};
-					bool inserted = false;
-					for(auto iter = lst.begin(); iter != lst.end(); ++iter)
-					{
-						if(iter->count >= tmp.count)
-						{
-							lst.insert(iter, tmp);
-							inserted = true;
-							break;
-						}
-					}
-					if(!inserted) lst.push_back(tmp);
-				}
-			}
-			search_requests.push_back(std::move(lst));
-		}
-	}
-	std::vector<std::vector<relative_index>> ret = {{{1, 2},{3, 4}}, {{5, 6}}};
-	return ret;
+    std::vector<std::list<search_term>> parsed_requests;
+    parsed_requests.reserve(queries_input.size());
+    for(const auto & line: queries_input)
+    {
+        if(!line.empty())
+        {
+            std::list<search_term> lst;
+            const char *start    = line.c_str();
+            const char *end      = start + line.size();
+            const char *iterator = start;
+            while (iterator < end)
+            {
+                //Parsing input string
+                while (iterator < end && !((*iterator >= 'a' && *iterator <= 'z') || (*iterator >= 'A' && *iterator <= 'Z'))) ++iterator;
+                start = iterator;
+                while (iterator < end && ((*iterator >= 'a' && *iterator <= 'z') || (*iterator >= 'A' && *iterator <= 'Z'))) ++iterator;
+                if(start == iterator) continue;
+                std::string word(start, iterator);
+                std::transform(word.begin(), word.end(), word.begin(), [](const unsigned char c){ return static_cast<unsigned char>(std::tolower(c)); });
+                auto it = std::find_if(lst.begin(), lst.end(), [&](const search_term & trm) { return trm.term == word;});
+                if(it == lst.end())
+                {
+                    auto tmp = search_term { word, ([&word, this]() -> size_t {
+                        size_t cnt = 0;
+                        auto entry_vec = _index->get_word_count(word);
+                        for (auto &e: entry_vec) cnt += e.count;
+                        return cnt;
+                    })()};
+                    if (tmp.count == 0) continue;
+                    bool inserted = false;
+                    for(auto iter = lst.begin(); iter != lst.end(); ++iter)
+                    {
+                        if(iter->count >= tmp.count)
+                        {
+                            lst.insert(iter, tmp);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    if(!inserted) lst.push_back(tmp);
+                }
+            }
+            parsed_requests.push_back(std::move(lst));
+        }
+    }
+    return parsed_requests;
 }
 
+
+size_t search_server::FindMaxAbsoluteRelevance(const std::list<absolute_index> & doc_list)
+{
+    size_t max = 0;
+    if(!doc_list.empty())
+    {
+        for(auto it : doc_list)
+        {
+            if (it.absolute_relevance > max) max = it.absolute_relevance;
+        }
+    }
+    return max;
+}
+
+std::vector<std::vector<relative_index>> search_server::search(const std::vector<std::string>& queries_input) const
+{
+    std::vector<std::list<search_term>> parsed_requests = ParseRequest(queries_input);
+    std::vector<std::list<absolute_index>> relevant_docs(parsed_requests.size());
+
+    for(size_t request = 0; request < parsed_requests.size(); ++request)
+    {
+        if (!parsed_requests[request].empty())
+        {
+            const auto & entry_vec = _index->get_word_count(parsed_requests[request].begin().operator->()->term);
+            std::list<absolute_index> relevant_docs_list;
+            if (!entry_vec.empty())
+            {
+                for (const auto term_entry: entry_vec)
+                {
+                    relevant_docs_list.emplace_back(absolute_index{term_entry.doc_id, term_entry.count});
+                }
+                for (auto & search_word = ++(parsed_requests[request].begin()); search_word != parsed_requests[request].end() ; ++search_word)
+                {
+                    const auto & entries = _index->get_word_count(search_word.operator->()->term); //перешли ко второму слову
+                    if (!entries.empty())
+                    {
+                        for (auto & iter : entries)
+                        {
+                            for (auto & relevant_doc : relevant_docs_list)
+                            {
+                                if (iter.doc_id == relevant_doc.doc_id)
+                                {
+                                    relevant_doc.absolute_relevance += iter.count;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+            relevant_docs[request] = move(relevant_docs_list);
+        }
+    }
+
+    //sort relevant_docs in descending order
+    for (auto & lst : relevant_docs)
+    {
+        lst.sort([](const absolute_index & a, const absolute_index & b)
+            {
+            return a.absolute_relevance > b.absolute_relevance;
+            });
+    }
+
+    std::vector<std::vector<relative_index>> result(relevant_docs.size());
+    //count relative relevance
+    for (size_t list_idx = 0; list_idx < relevant_docs.size(); ++list_idx)
+    {
+        size_t max = FindMaxAbsoluteRelevance(relevant_docs[list_idx]);
+        if (max)
+        {
+            for(auto & doc : relevant_docs[list_idx])
+            {
+                result[list_idx].emplace_back(relative_index{doc.doc_id, static_cast<float>(doc.absolute_relevance) / static_cast<float>(max)});
+            }
+        }
+    }
+	return result;
+}

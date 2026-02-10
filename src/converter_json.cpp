@@ -129,9 +129,9 @@ ConverterJSON::ConverterJSON()
         }
 
         if(config_dict.contains("max_responses") && !config_dict["max_responses"].is_null())
-            max_response = config_dict["config"]["max_responses"];
+            max_responses = config_dict["config"]["max_responses"];
         else
-            max_response = DEFAULT_MAX_RESPONSE;
+            max_responses = DEFAULT_MAX_RESPONSE;
 
         if(config_dict.contains("update_interval") && !config_dict["update_interval"].is_null())
             update_interval = config_dict["config"]["update_interval"];

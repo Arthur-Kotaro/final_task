@@ -25,7 +25,8 @@
     //for(auto it: req) std::cout << it << std::endl;
 
  //    inverted_index_ptr->get_word_count(std::string("he"));
-     search_server_ptr->search(req); 
+
+    search_server_ptr->search(req);
  }
 
 SApplication::~SApplication()

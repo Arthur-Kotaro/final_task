@@ -8,6 +8,7 @@
 #include <future>
 #include <list>
 #include <map>
+// #include <set>
 #include <utility>
 #include <cstddef>
 //#include <thread>
@@ -20,6 +21,12 @@ struct entry
     size_t count;
 };
 
+struct absolute_index
+{
+    size_t doc_id;
+    size_t absolute_relevance;
+};
+
 struct relative_index
 {
     size_t doc_id;
@@ -29,7 +36,7 @@ struct relative_index
 struct search_term
 {
     std::string term;
-    int count;
+    size_t count;
 };
 
 
@@ -48,7 +55,7 @@ public:
     explicit inverted_index(ConverterJSON * _converter_json);
     ~inverted_index();
     void update_document_base(std::vector<std::string> input_docs);
-    std::vector<entry> get_word_count(const std::string &word);
+    std::vector<entry> get_word_count(const std::string &word) const;
 };
 
 
@@ -56,8 +63,11 @@ class search_server
 {
 private:
 	inverted_index* _index;
+    // std::set<std::string> ParseRequest(const std::string & request);
+    [[nodiscard]] std::vector<std::list<search_term>> ParseRequest(const std::vector<std::string>& queries_input) const;
+    static size_t FindMaxAbsoluteRelevance(const std::list<absolute_index>& doc_list);
 
 public:
 	explicit search_server(inverted_index* idx): _index(idx) {}
-	std::vector<std::vector<relative_index>> search(const std::vector<std::string>& queries_input);
+	std::vector<std::vector<relative_index>> search(const std::vector<std::string>& queries_input) const;
 };
