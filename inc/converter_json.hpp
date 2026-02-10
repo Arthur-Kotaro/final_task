@@ -18,6 +18,12 @@ const std::string conf_path = "config.json";
 const std::string answ_path = "answers.json";
 const std::string req_path = "requests.json";
 
+struct RelativeIndex
+{
+    size_t doc_id;
+    float rank;
+};
+
 
 class config_file_not_found_exception: std::exception
 {
@@ -56,14 +62,15 @@ class ConverterJSON
     unsigned int max_responses, update_interval;
     std::vector<std::string> files;
 
-    bool check_version();
-    static void txt_version_to_int(std::string str_app_version, std::vector<int> & int_app_version);
+    bool CheckVersion();
+    static void TxtVersionToInt(const std::string& str_app_version, std::vector<int> & int_app_version);
 
 public:
     std::vector<std::string> GetTextDocuments();
     std::vector<std::string> GetRequests();
     [[nodiscard]] unsigned int GetResponsesLimit() const;
-    void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
+    // void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
+    void PutAnswers(const std::vector<std::vector<RelativeIndex>>& answers);
 
 	ConverterJSON();
 	~ConverterJSON();

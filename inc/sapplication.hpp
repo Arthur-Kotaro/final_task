@@ -9,9 +9,9 @@
 
 class SApplication
 {
-    ConverterJSON* ConverterJSON_ptr;
-    inverted_index* inverted_index_ptr;
-    search_server* search_server_ptr;
+    ConverterJSON* ConverterJSONPtr;
+    InvertedIndex* InvertedIndexPtr;
+    SearchServer* SearchServerPtr;
 public:
     SApplication();
     ~SApplication();

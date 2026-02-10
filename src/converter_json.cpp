@@ -4,7 +4,7 @@
 #define DEBUG_REQ
 
 
-void ConverterJSON::txt_version_to_int(const std::string str_app_version, std::vector<int> & int_app_version)
+void ConverterJSON::TxtVersionToInt(const std::string& str_app_version, std::vector<int> & int_app_version)
 {
     unsigned int start_pos = 0;
     for(unsigned int i = 0; i < str_app_version.length(); ++i)
@@ -17,7 +17,7 @@ void ConverterJSON::txt_version_to_int(const std::string str_app_version, std::v
     }
 }
 
-bool ConverterJSON::check_version()
+bool ConverterJSON::CheckVersion()
 {
     if(app_version[0] == '.') return false;
     bool last_is_point = false;
@@ -33,8 +33,8 @@ bool ConverterJSON::check_version()
 
     std::vector<int> semantic_vers_from_config;
     std::vector<int> semantic_vers_program;
-    txt_version_to_int(app_version, semantic_vers_from_config);
-    txt_version_to_int(exe_version, semantic_vers_program);
+    TxtVersionToInt(app_version, semantic_vers_from_config);
+    TxtVersionToInt(exe_version, semantic_vers_program);
 
 //    bool app_newer_than_config = false;
     unsigned int version_notation_min_length = (semantic_vers_from_config.size() < semantic_vers_program.size()) ? semantic_vers_from_config.size() : semantic_vers_program.size();
@@ -99,9 +99,16 @@ unsigned int ConverterJSON::GetResponsesLimit() const
 }
 
 
-void ConverterJSON::PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers)
+void ConverterJSON::PutAnswers(const std::vector<std::vector<RelativeIndex>>& answers)
 {
+    std::ofstream AnswerFile(answ_path);
+    if (AnswerFile.is_open() && answers.size() > 0)
+    {
+        for(unsigned int i = 0; i < answers.size(); ++i)
+        {
 
+        }
+    }
 
 }
 
@@ -125,7 +132,7 @@ ConverterJSON::ConverterJSON()
         if(config_dict.contains("version") && !config_dict["version"].is_null())
         {
             app_version = config_dict["config"]["version"];
-            if(!check_version())    throw incompatible_config_file_exception();
+            if(!CheckVersion())    throw incompatible_config_file_exception();
         }
 
         if(config_dict.contains("max_responses") && !config_dict["max_responses"].is_null())
