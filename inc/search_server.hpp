@@ -17,13 +17,14 @@
 
 struct Entry
 {
-    size_t doc_id;
+    size_t docID;
     size_t count;
+    bool operator==(const Entry & other) const;
 };
 
 struct AbsoluteIndex
 {
-    size_t doc_id;
+    size_t docID;
     size_t absolute_relevance;
 };
 
@@ -40,24 +41,23 @@ private:
     std::vector<std::string> docs;
     std::unique_ptr<std::map<std::string, std::vector<Entry>>> freq_dictionary;
 
-    static std::unique_ptr<std::map<std::string, std::vector<Entry>>> separate_indexing(int _doc_id, const std::string & txt_file_content);
-    static void merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &auxiliary_maps, unsigned int hardware_threads);
-    static void merge_two_separated_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &sep_index_vec, size_t dst, size_t src);
-    static void merge_two_sorted_index_vec(std::vector<Entry> &dst, std::vector<Entry> &src);
+    static std::unique_ptr<std::map<std::string, std::vector<Entry>>> SeparateIndexing(int _doc_id, const std::string & txt_file_content);
+    static void MergeAuxiliaryMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &auxiliary_maps, unsigned int hardware_threads);
+    static void MergeTwoSeparatedMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &sep_index_vec, size_t dst, size_t src);
+    static void MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<Entry> &src);
 
 public:
     explicit InvertedIndex(ConverterJSON * _converter_json);
     ~InvertedIndex();
     void UpdateDocumentBase(std::vector<std::string> input_docs);
-    [[nodiscard]] std::vector<Entry> GetWordCount(const std::string &word) const;
+    std::vector<Entry> GetWordCount(const std::string &word);
 };
 
 
 class SearchServer
 {
 private:
-	InvertedIndex* _index;
-    // std::set<std::string> ParseRequest(const std::string & request);
+	InvertedIndex* _index; 
     [[nodiscard]] std::vector<std::list<SearchTerm>> ParseRequest(const std::vector<std::string>& queries_input) const;
     static size_t FindMaxAbsoluteRelevance(const std::list<AbsoluteIndex>& doc_list);
 

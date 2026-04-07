@@ -1,10 +1,18 @@
 #include "search_server.hpp"
 
 
-InvertedIndex::InvertedIndex(ConverterJSON * _converter_json)
+bool Entry::operator==(const Entry & other) const
 {
-    UpdateDocumentBase(_converter_json->GetTextDocuments());
+  return (docID == other.docID) && (count == other.count);
 }
+
+
+
+InvertedIndex::InvertedIndex(ConverterJSON * _ConverterJSON)
+{
+    UpdateDocumentBase(_ConverterJSON->GetTextDocuments());
+}
+
 
 
 void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
@@ -18,7 +26,7 @@ void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
 
     for (size_t i = 0; i < docs.size(); ++i)
     {
-        index_future.push_back(std::async(std::launch::async, &InvertedIndex::separate_indexing, static_cast<int>(i), std::cref(docs[i])));
+        index_future.push_back(std::async(std::launch::async, &InvertedIndex::SeparateIndexing, static_cast<int>(i), std::cref(docs[i])));
     }
     for (size_t i = 0; i < docs.size(); ++i)
     {
@@ -30,12 +38,13 @@ void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
     { return  left->size() > right->size();});
     //merge maps and free memory
     const unsigned int hardware_threads = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 2;
-    merge_auxiliary_maps(index_for_each_file, hardware_threads);
+    MergeAuxiliaryMaps(index_for_each_file, hardware_threads);
     freq_dictionary = std::move(index_for_each_file[0]);
 }
 
 
-std::unique_ptr<std::map<std::string, std::vector<Entry>>> InvertedIndex::separate_indexing(int _doc_id, const std::string & txt_file_content)
+
+std::unique_ptr<std::map<std::string, std::vector<Entry>>> InvertedIndex::SeparateIndexing(int _docID, const std::string & txt_file_content)
 {
     auto separated_map = std::make_unique<std::map<std::string, std::vector<Entry>>>();
     const char *start    = txt_file_content.c_str();
@@ -50,7 +59,7 @@ std::unique_ptr<std::map<std::string, std::vector<Entry>>> InvertedIndex::separa
         std::string word(start, iterator);
         auto map_iterator = separated_map->find(word);
         if (map_iterator == separated_map->end())
-            separated_map->emplace(word, std::vector<Entry> { Entry{ static_cast<size_t>(_doc_id), 1 } }); //add new word in the map
+            separated_map->emplace(word, std::vector<Entry> { Entry{ static_cast<size_t>(_docID), 1 } }); //add new word in the map
         else
             map_iterator->second[0].count++; //incrementation
     }
@@ -59,7 +68,7 @@ std::unique_ptr<std::map<std::string, std::vector<Entry>>> InvertedIndex::separa
 
 
 
-void InvertedIndex::merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &auxiliary_maps, const unsigned int hardware_threads)
+void InvertedIndex::MergeAuxiliaryMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &auxiliary_maps, const unsigned int hardware_threads)
 {
     if (auxiliary_maps.size() == 1) return;
     unsigned int threads_num = (auxiliary_maps.size() / 2) >= hardware_threads ? hardware_threads : (auxiliary_maps.size() / 2);
@@ -67,7 +76,7 @@ void InvertedIndex::merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<st
     threads.reserve(threads_num);
     for (size_t i = 0; i < threads_num; ++i)
     {
-        threads.emplace_back(merge_two_separated_maps, std::ref(auxiliary_maps), i, auxiliary_maps.size() - i - 1);
+        threads.emplace_back(MergeTwoSeparatedMaps, std::ref(auxiliary_maps), i, auxiliary_maps.size() - i - 1);
     }
     for (auto &it: threads)
     {
@@ -78,11 +87,12 @@ void InvertedIndex::merge_auxiliary_maps(std::vector<std::unique_ptr<std::map<st
         auxiliary_maps.pop_back();
     }
     if (auxiliary_maps.size() > 1)
-        merge_auxiliary_maps(auxiliary_maps, hardware_threads);
+        MergeAuxiliaryMaps(auxiliary_maps, hardware_threads);
 }
 
 
-void InvertedIndex::merge_two_separated_maps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &sep_index_vec, size_t dst, size_t src)
+
+void InvertedIndex::MergeTwoSeparatedMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &sep_index_vec, size_t dst, size_t src)
 {
     for (auto it = sep_index_vec[src]->begin();  it != sep_index_vec[src]->end();)
     {
@@ -93,23 +103,24 @@ void InvertedIndex::merge_two_separated_maps(std::vector<std::unique_ptr<std::ma
             sep_index_vec[dst]->insert(std::move(tmp));
         }
         else
-            merge_two_sorted_index_vec(sep_index_vec[dst]->operator[](it->first), sep_index_vec[src]->operator[](it->first));
+            MergeTwoSortedIndexVec(sep_index_vec[dst]->operator[](it->first), sep_index_vec[src]->operator[](it->first));
         it = it_next;
     }
 }
 
 
-void InvertedIndex::merge_two_sorted_index_vec(std::vector<Entry> &dst, std::vector<Entry> &src)
+
+void InvertedIndex::MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<Entry> &src)
 {
     if(src.empty()) return;
-    std::sort(src.begin(), src.end(), [](auto const &a, auto const &b) ->bool {return a.doc_id < b.doc_id;}); //exclude statement?
+    std::sort(src.begin(), src.end(), [](auto const &a, auto const &b) ->bool {return a.docID < b.docID;}); //exclude statement?
     std::vector<Entry> out;
     out.reserve(dst.size() + src.size());
     size_t i = 0, j = 0;
     while ( i < dst.size() && j < src.size())
     {
-        if(dst[i].doc_id < src[j].doc_id) out.push_back(dst[i++]);
-        else if (dst[i].doc_id > src[j].doc_id) out.push_back(src[j++]);
+        if(dst[i].docID < src[j].docID) out.push_back(std::move(dst[i++]));
+        else if (dst[i].docID > src[j].docID) out.push_back(std::move(src[j++]));
     }
     while (i < dst.size()) out.push_back(dst[i++]);
     while (j < src.size()) out.push_back(src[j++]);
@@ -117,27 +128,25 @@ void InvertedIndex::merge_two_sorted_index_vec(std::vector<Entry> &dst, std::vec
 }
 
 
-std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word) const
+std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word)
 {
 	auto it = freq_dictionary->find(word);
-    if (it != freq_dictionary->end())
-        return it->second;
-    else
-        return {};
+  if(it == freq_dictionary->end()) return {};
+	return it->second;
 }
+
 
 
 std::vector<std::list<SearchTerm>> SearchServer::ParseRequest(const std::vector<std::string>& queries_input) const
 {
-    std::vector<std::list<SearchTerm>> parsed_requests;
-    parsed_requests.reserve(queries_input.size());
-    for(const auto & line: queries_input)
+    std::vector<std::list<SearchTerm>> parsed_requests(queries_input.size());
+    for (size_t lineIndex = 0; lineIndex < queries_input.size(); ++lineIndex)
     {
-        if(!line.empty())
+        if(!queries_input[lineIndex].empty())
         {
             std::list<SearchTerm> lst;
-            const char *start    = line.c_str();
-            const char *end      = start + line.size();
+            const char *start    = queries_input[lineIndex].c_str();
+            const char *end      = start + queries_input[lineIndex].size();
             const char *iterator = start;
             while (iterator < end)
             {
@@ -145,7 +154,11 @@ std::vector<std::list<SearchTerm>> SearchServer::ParseRequest(const std::vector<
                 while (iterator < end && !((*iterator >= 'a' && *iterator <= 'z') || (*iterator >= 'A' && *iterator <= 'Z'))) ++iterator;
                 start = iterator;
                 while (iterator < end && ((*iterator >= 'a' && *iterator <= 'z') || (*iterator >= 'A' && *iterator <= 'Z'))) ++iterator;
-                if(start == iterator) continue;
+                if(start == iterator)
+                {
+                    iterator++;
+                    continue;
+                }
                 std::string word(start, iterator);
                 std::transform(word.begin(), word.end(), word.begin(), [](const unsigned char c){ return static_cast<unsigned char>(std::tolower(c)); });
                 auto it = std::find_if(lst.begin(), lst.end(), [&](const SearchTerm & trm) { return trm.term == word;});
@@ -171,8 +184,10 @@ std::vector<std::list<SearchTerm>> SearchServer::ParseRequest(const std::vector<
                     if(!inserted) lst.push_back(tmp);
                 }
             }
-            parsed_requests.push_back(std::move(lst));
+            parsed_requests[lineIndex] = (std::move(lst));
         }
+        else
+            parsed_requests[lineIndex] = std::list<SearchTerm>();
     }
     return parsed_requests;
 }
@@ -206,18 +221,18 @@ std::vector<std::vector<RelativeIndex>> SearchServer::Search(const std::vector<s
             {
                 for (const auto term_entry: entry_vec)
                 {
-                    relevant_docs_list.emplace_back(AbsoluteIndex{term_entry.doc_id, term_entry.count});
+                    relevant_docs_list.emplace_back(AbsoluteIndex{term_entry.docID, term_entry.count});
                 }
                 for (auto & search_word = ++(parsed_requests[request].begin()); search_word != parsed_requests[request].end() ; ++search_word)
                 {
-                    const auto & entries = _index->GetWordCount(search_word.operator->()->term); //перешли ко второму слову
+                    const auto & entries = _index->GetWordCount(search_word.operator->()->term);
                     if (!entries.empty())
                     {
                         for (auto & iter : entries)
                         {
                             for (auto & relevant_doc : relevant_docs_list)
                             {
-                                if (iter.doc_id == relevant_doc.doc_id)
+                                if (iter.docID == relevant_doc.docID)
                                 {
                                     relevant_doc.absolute_relevance += iter.count;
                                     break;
@@ -250,7 +265,7 @@ std::vector<std::vector<RelativeIndex>> SearchServer::Search(const std::vector<s
         {
             for(auto & doc : relevant_docs[list_idx])
             {
-                result[list_idx].emplace_back(RelativeIndex{doc.doc_id, static_cast<float>(doc.absolute_relevance) / static_cast<float>(max)});
+                result[list_idx].emplace_back(RelativeIndex{doc.docID, static_cast<float>(doc.absolute_relevance) / static_cast<float>(max)});
             }
         }
     }

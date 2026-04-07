@@ -20,10 +20,10 @@ const std::string req_path = "requests.json";
 
 struct RelativeIndex
 {
-    size_t doc_id;
+    size_t docID;
     float rank;
+    bool operator==(const RelativeIndex & other) const;
 };
-
 
 class config_file_not_found_exception: std::exception
 {
@@ -63,15 +63,17 @@ class ConverterJSON
     std::vector<std::string> files;
 
     bool CheckVersion();
-    static void TxtVersionToInt(const std::string& str_app_version, std::vector<int> & int_app_version);
+    static void TxtVersionToInt(std::string str_app_version, std::vector<int> & int_app_version);
 
 public:
     std::vector<std::string> GetTextDocuments();
     std::vector<std::string> GetRequests();
     [[nodiscard]] unsigned int GetResponsesLimit() const;
-    // void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
-    void PutAnswers(const std::vector<std::vector<RelativeIndex>>& answers);
+    //void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
+    void PutAnswers(const std::vector<std::vector<RelativeIndex>> & answers);
 
 	ConverterJSON();
 	~ConverterJSON();
 };
+
+//[[nodiscard]] std::vector<std::vector<RelativeIndex>> Search(const std::vector<std::string>& queries_input) const;

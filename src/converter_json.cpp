@@ -1,10 +1,13 @@
 #include "converter_json.hpp"
 
 
-#define DEBUG_REQ
+bool RelativeIndex::operator==(const RelativeIndex & other) const
+{
+  return (docID == other.docID) && (rank == other.rank);
+}
 
 
-void ConverterJSON::TxtVersionToInt(const std::string& str_app_version, std::vector<int> & int_app_version)
+void ConverterJSON::TxtVersionToInt(const std::string str_app_version, std::vector<int> & int_app_version)
 {
     unsigned int start_pos = 0;
     for(unsigned int i = 0; i < str_app_version.length(); ++i)
@@ -41,7 +44,6 @@ bool ConverterJSON::CheckVersion()
     for (int i = 0; i < version_notation_min_length; ++i)
     {
         if (semantic_vers_program[i] < semantic_vers_from_config[i]) return false;
-//        if (semantic_vers_program[i] > semantic_vers_from_config[i]) app_newer_than_config = true;
     }
     return true;
 }
@@ -49,17 +51,17 @@ bool ConverterJSON::CheckVersion()
 
 std::vector<std::string> ConverterJSON::GetTextDocuments()
 {
-    std::vector<std::string> text_documents;
-    for(const auto & file : files)
-    {
-        std::ifstream txt_file;
-        txt_file.open(file, std::ios::binary);
-        if (txt_file.is_open())
-        {
-            text_documents.emplace_back(std::istreambuf_iterator<char>(txt_file), std::istreambuf_iterator<char>());
-        }
+	std::vector<std::string> text_documents;
+	for(const auto & file : files)
+	{
+		std::ifstream txt_file;
+		txt_file.open(file, std::ios::binary);
+		if (txt_file.is_open())
+		{
+			text_documents.emplace_back(std::istreambuf_iterator<char>(txt_file), std::istreambuf_iterator<char>());
+        	}
         txt_file.close();
-    }
+    	}
     return text_documents;
 }
 
@@ -70,25 +72,20 @@ std::vector<std::string> ConverterJSON::GetRequests()
     std::ifstream request_ifstream(req_path);
     if (!request_ifstream.is_open())
     {
-   	request_ifstream.close();
+   		request_ifstream.close();
+      std::exit(0);
+    }
+    request_ifstream >> requests_dict;
+    if(!requests_dict.contains("requests") && config_dict["requests"].is_null())
+    {
 #ifdef DEBUG_REQ
-	std::cout << "requests.json is not open" << std::endl;
+        std::cout << "requests.json is empty" << std::endl;
 #endif
+            //throw empty_config_file_exception();
     }
     else
     {
-	request_ifstream >> requests_dict;
-        if(!requests_dict.contains("requests") && config_dict["requests"].is_null())
-        {
-#ifdef DEBUG_REQ
-	std::cout << "requests.json is empty" << std::endl;
-#endif
-            //throw empty_config_file_exception();
-        }
-	else
-	{
-		requests = requests_dict["requests"];
-	}
+	requests = requests_dict["requests"];
     }
     return requests;
 }
@@ -99,19 +96,6 @@ unsigned int ConverterJSON::GetResponsesLimit() const
 }
 
 
-void ConverterJSON::PutAnswers(const std::vector<std::vector<RelativeIndex>>& answers)
-{
-    std::ofstream AnswerFile(answ_path);
-    if (AnswerFile.is_open() && answers.size() > 0)
-    {
-        for(unsigned int i = 0; i < answers.size(); ++i)
-        {
-
-        }
-    }
-
-}
-
 ConverterJSON::ConverterJSON()
 {
     std::ifstream config_ifstream(conf_path);
@@ -120,34 +104,73 @@ ConverterJSON::ConverterJSON()
         config_ifstream.close();
         throw config_file_not_found_exception();
     }
-    else
+    config_ifstream >> config_dict;
+    if(!config_dict.contains("config") && config_dict["config"].is_null())
     {
-        config_ifstream >> config_dict;
-        if(!config_dict.contains("config") && config_dict["config"].is_null())
-        {
-            throw empty_config_file_exception();
-        }
-        if(config_dict.contains("name") && !config_dict["name"].is_null())
-            app_name = config_dict["config"]["name"];
-        if(config_dict.contains("version") && !config_dict["version"].is_null())
-        {
-            app_version = config_dict["config"]["version"];
-            if(!CheckVersion())    throw incompatible_config_file_exception();
-        }
-
-        if(config_dict.contains("max_responses") && !config_dict["max_responses"].is_null())
-            max_responses = config_dict["config"]["max_responses"];
-        else
-            max_responses = DEFAULT_MAX_RESPONSE;
-
-        if(config_dict.contains("update_interval") && !config_dict["update_interval"].is_null())
-            update_interval = config_dict["config"]["update_interval"];
-        else
-            update_interval = DEFAULT_UPDATE_INTERVAL;
-        files = config_dict["files"];
+        throw empty_config_file_exception();
     }
+    if(config_dict.contains("name") && !config_dict["name"].is_null())
+        app_name = config_dict["config"]["name"];
+    if(config_dict.contains("version") && !config_dict["version"].is_null())
+    {
+        app_version = config_dict["config"]["version"];
+        if(!CheckVersion())
+	{
+	    throw incompatible_config_file_exception(); 
+	}
+    }
+    if(config_dict.contains("max_responses") && !config_dict["max_responses"].is_null())
+        max_responses = config_dict["config"]["max_responses"];
+    else
+        max_responses = DEFAULT_MAX_RESPONSE;
+
+    if(config_dict.contains("update_interval") && !config_dict["update_interval"].is_null())
+        update_interval = config_dict["config"]["update_interval"];
+    else
+        update_interval = DEFAULT_UPDATE_INTERVAL;
+    files = config_dict["files"]; 
     config_ifstream.close();
 }
+
+static nlohmann::json RelativeIndexToJSON(const RelativeIndex & relevance)
+{
+	return nlohmann::json{{"docID", relevance.docID}, {"rank", relevance.rank}};
+}
+
+void ConverterJSON::PutAnswers(const std::vector<std::vector<RelativeIndex>> & answers)
+{
+	using nlohmann::json;
+	std::ofstream AnswersFile(answ_path);
+	if(!AnswersFile.is_open() || answers.empty()) return;
+	json resultJSON;
+	resultJSON["answers"] = json::object();
+	int requestNumber = 1;
+	for(const auto & requestAnswer : answers)
+	{
+		json answerJSON;
+		json documentList = json::array();
+		for(const auto & relevantDocument : requestAnswer)
+		{
+			documentList.push_back(RelativeIndexToJSON(relevantDocument));
+		}
+		if(documentList.empty())
+		{
+			answerJSON["result"] = false;
+		}
+		else
+		{
+			answerJSON["result"] = true;
+			answerJSON["relevance"] = std::move(documentList);
+		}
+		char keybuf[16];
+		std::snprintf(keybuf, sizeof(keybuf), "request%03d", requestNumber);
+		resultJSON["answers"][keybuf] = std::move(answerJSON);
+		requestNumber++;
+	}
+	AnswersFile << resultJSON.dump(4) << std::endl;
+	AnswersFile.close();
+}
+
 
 ConverterJSON::~ConverterJSON()
 {
