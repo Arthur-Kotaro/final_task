@@ -66,6 +66,12 @@ std::vector<std::string> ConverterJSON::GetTextDocuments()
 }
 
 
+std::string& ConverterJSON::GetName()
+{
+    return app_name;
+}
+
+
 std::vector<std::string> ConverterJSON::GetRequests()
 {
     std::vector<std::string> requests;

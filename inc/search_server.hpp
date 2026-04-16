@@ -47,8 +47,9 @@ private:
     static void MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<Entry> &src);
 
 public:
+    InvertedIndex() = default;
     explicit InvertedIndex(ConverterJSON * _converter_json);
-    ~InvertedIndex();
+    ~InvertedIndex() = default;
     void UpdateDocumentBase(std::vector<std::string> input_docs);
     std::vector<Entry> GetWordCount(const std::string &word);
 };

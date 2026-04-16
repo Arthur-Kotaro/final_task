@@ -68,6 +68,7 @@ class ConverterJSON
 public:
     std::vector<std::string> GetTextDocuments();
     std::vector<std::string> GetRequests();
+    std::string& GetName();
     [[nodiscard]] unsigned int GetResponsesLimit() const;
     //void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
     void PutAnswers(const std::vector<std::vector<RelativeIndex>> & answers);
