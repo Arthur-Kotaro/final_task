@@ -1,18 +1,9 @@
 #pragma once
 
-#include <algorithm>
-#include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
-#include <future>
 #include <list>
 #include <map>
-// #include <set>
-#include <utility>
-#include <cstddef>
-//#include <thread>
-
 #include "converter_json.hpp"
 
 struct Entry
@@ -51,7 +42,7 @@ public:
     explicit InvertedIndex(ConverterJSON * _converter_json);
     ~InvertedIndex() = default;
     void UpdateDocumentBase(std::vector<std::string> input_docs);
-    std::vector<Entry> GetWordCount(const std::string &word);
+    std::vector<Entry> GetWordCount(const std::string &word) const;
 };
 
 

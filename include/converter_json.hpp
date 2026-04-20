@@ -1,14 +1,8 @@
 #pragma once
 
-#include <cstddef>
-#include <iostream>
 #include <string>
 #include <vector>
-#include <exception>
-#include <fstream>
-
 #include "nlohmann/json.hpp"
-//#include "gtest/gtest.h"
 
 #define DEFAULT_MAX_RESPONSE 5
 #define DEFAULT_UPDATE_INTERVAL 5
@@ -66,15 +60,12 @@ class ConverterJSON
     static void TxtVersionToInt(std::string str_app_version, std::vector<int> & int_app_version);
 
 public:
-    std::vector<std::string> GetTextDocuments();
+    [[nodiscard]] std::vector<std::string> GetTextDocuments() const;
     std::vector<std::string> GetRequests();
     std::string& GetName();
     [[nodiscard]] unsigned int GetResponsesLimit() const;
-    //void PutAnswers(std::vector<std::vector<std::pair<int, float>>> answers);
     void PutAnswers(const std::vector<std::vector<RelativeIndex>> & answers);
 
 	ConverterJSON();
 	~ConverterJSON();
 };
-
-//[[nodiscard]] std::vector<std::vector<RelativeIndex>> Search(const std::vector<std::string>& queries_input) const;

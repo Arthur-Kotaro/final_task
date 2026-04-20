@@ -1,11 +1,10 @@
 #include "converter_json.hpp"
-
+#include <fstream>
 
 bool RelativeIndex::operator==(const RelativeIndex & other) const
 {
   return (docID == other.docID) && (rank == other.rank);
 }
-
 
 void ConverterJSON::TxtVersionToInt(const std::string str_app_version, std::vector<int> & int_app_version)
 {
@@ -48,8 +47,7 @@ bool ConverterJSON::CheckVersion()
     return true;
 }
 
-
-std::vector<std::string> ConverterJSON::GetTextDocuments()
+std::vector<std::string> ConverterJSON::GetTextDocuments() const
 {
 	std::vector<std::string> text_documents;
 	for(const auto & file : files)
@@ -65,12 +63,10 @@ std::vector<std::string> ConverterJSON::GetTextDocuments()
     return text_documents;
 }
 
-
 std::string& ConverterJSON::GetName()
 {
     return app_name;
 }
-
 
 std::vector<std::string> ConverterJSON::GetRequests()
 {
@@ -100,7 +96,6 @@ unsigned int ConverterJSON::GetResponsesLimit() const
 {
     return max_responses;
 }
-
 
 ConverterJSON::ConverterJSON()
 {
@@ -176,7 +171,6 @@ void ConverterJSON::PutAnswers(const std::vector<std::vector<RelativeIndex>> & a
 	AnswersFile << resultJSON.dump(4) << std::endl;
 	AnswersFile.close();
 }
-
 
 ConverterJSON::~ConverterJSON()
 {

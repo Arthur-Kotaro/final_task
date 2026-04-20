@@ -1,19 +1,15 @@
 #include "search_server.hpp"
-
+#include <future>
 
 bool Entry::operator==(const Entry & other) const
 {
   return (docID == other.docID) && (count == other.count);
 }
 
-
-
 InvertedIndex::InvertedIndex(ConverterJSON * _ConverterJSON)
 {
     UpdateDocumentBase(_ConverterJSON->GetTextDocuments());
 }
-
-
 
 void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
 {
@@ -42,8 +38,6 @@ void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
     freq_dictionary = std::move(index_for_each_file[0]);
 }
 
-
-
 std::unique_ptr<std::map<std::string, std::vector<Entry>>> InvertedIndex::SeparateIndexing(int _docID, const std::string & txt_file_content)
 {
     auto separated_map = std::make_unique<std::map<std::string, std::vector<Entry>>>();
@@ -65,8 +59,6 @@ std::unique_ptr<std::map<std::string, std::vector<Entry>>> InvertedIndex::Separa
     }
     return separated_map;
 }
-
-
 
 void InvertedIndex::MergeAuxiliaryMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &auxiliary_maps, const unsigned int hardware_threads)
 {
@@ -90,8 +82,6 @@ void InvertedIndex::MergeAuxiliaryMaps(std::vector<std::unique_ptr<std::map<std:
         MergeAuxiliaryMaps(auxiliary_maps, hardware_threads);
 }
 
-
-
 void InvertedIndex::MergeTwoSeparatedMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &sep_index_vec, size_t dst, size_t src)
 {
     for (auto it = sep_index_vec[src]->begin();  it != sep_index_vec[src]->end();)
@@ -107,8 +97,6 @@ void InvertedIndex::MergeTwoSeparatedMaps(std::vector<std::unique_ptr<std::map<s
         it = it_next;
     }
 }
-
-
 
 void InvertedIndex::MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<Entry> &src)
 {
@@ -127,15 +115,12 @@ void InvertedIndex::MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<
     dst = std::move(out);
 }
 
-
-std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word)
+std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word) const
 {
 	auto it = freq_dictionary->find(word);
   if(it == freq_dictionary->end()) return {};
 	return it->second;
 }
-
-
 
 std::vector<std::list<SearchTerm>> SearchServer::ParseRequest(const std::vector<std::string>& queries_input) const
 {
@@ -192,7 +177,6 @@ std::vector<std::list<SearchTerm>> SearchServer::ParseRequest(const std::vector<
     return parsed_requests;
 }
 
-
 size_t SearchServer::FindMaxAbsoluteRelevance(const std::list<AbsoluteIndex> & doc_list)
 {
     size_t max = 0;
@@ -246,7 +230,6 @@ std::vector<std::vector<RelativeIndex>> SearchServer::Search(const std::vector<s
             relevant_docs[request] = std::move(relevant_docs_list);
         }
     }
-
     //sort relevant_docs in descending order
     for (auto & lst : relevant_docs)
     {
@@ -255,7 +238,6 @@ std::vector<std::vector<RelativeIndex>> SearchServer::Search(const std::vector<s
             return a.absolute_relevance > b.absolute_relevance;
             });
     }
-
     std::vector<std::vector<RelativeIndex>> result(relevant_docs.size());
     //count relative relevance
     for (size_t list_idx = 0; list_idx < relevant_docs.size(); ++list_idx)

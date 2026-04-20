@@ -1,11 +1,8 @@
 #pragma once
-
-#include <fstream>
-
 #include "converter_json.hpp"
 #include "search_server.hpp"
 
-#define DEBUG
+// #define DEBUG
 
 class SApplication
 {
