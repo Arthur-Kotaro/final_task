@@ -22,7 +22,7 @@ SApplication::SApplication()
        std::cerr << except.what();
        std::exit(0);
    }
-   std::cout << "Starting " << ConverterJSON_ptr->GetName();
+   std::cout << "Starting " << ConverterJSON_ptr->GetName() << std::endl;
    InvertedIndex_ptr = new InvertedIndex(ConverterJSON_ptr);
    SearchServer_ptr = new SearchServer(InvertedIndex_ptr);
    ConverterJSON_ptr->PutAnswers(SearchServer_ptr->Search(ConverterJSON_ptr->GetRequests()));

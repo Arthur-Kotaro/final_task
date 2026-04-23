@@ -1,33 +1,38 @@
 #include "converter_json.hpp"
 #include <fstream>
+#include <iostream>
+#include <iterator>
 
 bool RelativeIndex::operator==(const RelativeIndex & other) const
 {
   return (docID == other.docID) && (rank == other.rank);
 }
 
-void ConverterJSON::TxtVersionToInt(const std::string str_app_version, std::vector<int> & int_app_version)
+void ConverterJSON::TxtVersionToInt(const std::string & str_app_version, std::vector<int> & int_app_version)
 {
     unsigned int start_pos = 0;
     for(unsigned int i = 0; i < str_app_version.length(); ++i)
     {
         if(str_app_version[i] == '.')
         {
-            int_app_version.push_back(stoi(str_app_version.substr(start_pos, i-start_pos-1)));
+            int_app_version.push_back(stoi(str_app_version.substr(start_pos, i-start_pos)));
             start_pos = i + 1;
         }
     }
+    if(start_pos < str_app_version.length())
+        int_app_version.push_back(stoi(str_app_version.substr(start_pos)));
 }
 
 bool ConverterJSON::CheckVersion()
 {
-    if(app_version[0] == '.') return false;
+    if(config_app_version.empty()) return false;
+    if(config_app_version[0] == '.') return false;
     bool last_is_point = false;
-    for(int i = 0; i < app_version.length(); ++i)
+    for(int i = 0; i < config_app_version.length(); ++i)
     {
-        if(app_version[i] != '.' && (app_version[i] < 0 || app_version[i] > 0)) return false;
-        if(app_version[i] == '.' && last_is_point)                              return false;
-        if(app_version[i] == '.')
+        if(config_app_version[i] != '.' && (config_app_version[i] < '0' || config_app_version[i] > '9')) return false;
+        if(config_app_version[i] == '.' && last_is_point)                              return false;
+        if(config_app_version[i] == '.')
             last_is_point = true;
         else
             last_is_point = false;
@@ -35,16 +40,14 @@ bool ConverterJSON::CheckVersion()
 
     std::vector<int> semantic_vers_from_config;
     std::vector<int> semantic_vers_program;
-    TxtVersionToInt(app_version, semantic_vers_from_config);
-    TxtVersionToInt(exe_version, semantic_vers_program);
-
-//    bool app_newer_than_config = false;
-    unsigned int version_notation_min_length = (semantic_vers_from_config.size() < semantic_vers_program.size()) ? semantic_vers_from_config.size() : semantic_vers_program.size();
-    for (int i = 0; i < version_notation_min_length; ++i)
+    TxtVersionToInt(config_app_version, semantic_vers_from_config);
+    TxtVersionToInt(app_version, semantic_vers_program);
+    size_t version_notation_min_length = (semantic_vers_from_config.size() < semantic_vers_program.size()) ? semantic_vers_from_config.size() : semantic_vers_program.size();
+    for (size_t i = 0; i < version_notation_min_length; ++i)
     {
         if (semantic_vers_program[i] < semantic_vers_from_config[i]) return false;
     }
-    return true;
+    return semantic_vers_program.size() >= semantic_vers_from_config.size();
 }
 
 std::vector<std::string> ConverterJSON::GetTextDocuments() const
@@ -57,38 +60,38 @@ std::vector<std::string> ConverterJSON::GetTextDocuments() const
 		if (txt_file.is_open())
 		{
 			text_documents.emplace_back(std::istreambuf_iterator<char>(txt_file), std::istreambuf_iterator<char>());
-        	}
+        }
+        else
+        {
+            std::cerr << "Warning: file \"" << file << "\" can\'t be open." << std::endl;
+        }
         txt_file.close();
-    	}
+    }
     return text_documents;
 }
 
 std::string& ConverterJSON::GetName()
 {
-    return app_name;
+    return config_app_name;
 }
 
 std::vector<std::string> ConverterJSON::GetRequests()
 {
     std::vector<std::string> requests;
     std::ifstream request_ifstream(req_path);
-    if (!request_ifstream.is_open())
+    if (request_ifstream.is_open())
     {
-   		request_ifstream.close();
-      std::exit(0);
-    }
-    request_ifstream >> requests_dict;
-    if(!requests_dict.contains("requests") && config_dict["requests"].is_null())
-    {
-#ifdef DEBUG_REQ
-        std::cout << "requests.json is empty" << std::endl;
-#endif
-            //throw empty_config_file_exception();
+   		request_ifstream >> requests_dict;
+        if(requests_dict.contains("requests") && !requests_dict["requests"].is_null())
+            requests = requests_dict["requests"];
+        else
+            std::cerr << "Warning: file \"" << req_path << "\" is empty." << std::endl;
     }
     else
     {
-	requests = requests_dict["requests"];
+        std::cerr << "Warning: file \"" << req_path << "\" can\'t be open." << std::endl; 
     }
+    request_ifstream.close();
     return requests;
 }
 
@@ -110,15 +113,13 @@ ConverterJSON::ConverterJSON()
     {
         throw empty_config_file_exception();
     }
-    if(config_dict.contains("name") && !config_dict["name"].is_null())
-        app_name = config_dict["config"]["name"];
-    if(config_dict.contains("version") && !config_dict["version"].is_null())
+    if(config_dict["config"].contains("name") && !config_dict["config"]["name"].is_null())
+        config_app_name = config_dict["config"]["name"];
+    if(config_dict["config"].contains("version") && !config_dict["config"]["version"].is_null())
     {
-        app_version = config_dict["config"]["version"];
-        if(!CheckVersion())
-	{
-	    throw incompatible_config_file_exception(); 
-	}
+        config_app_version = config_dict["config"]["version"];
+        if(!CheckVersion()) 
+	        throw incompatible_config_file_exception();
     }
     if(config_dict.contains("max_responses") && !config_dict["max_responses"].is_null())
         max_responses = config_dict["config"]["max_responses"];
@@ -141,6 +142,12 @@ static nlohmann::json RelativeIndexToJSON(const RelativeIndex & relevance)
 void ConverterJSON::PutAnswers(const std::vector<std::vector<RelativeIndex>> & answers)
 {
 	using nlohmann::json;
+    if(answers.empty())
+    {
+        std::cerr << "Warning: there is nothing to save." << std::endl;
+        return;
+    }
+
 	std::ofstream AnswersFile(answ_path);
 	if(!AnswersFile.is_open() || answers.empty()) return;
 	json resultJSON;

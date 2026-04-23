@@ -8,10 +8,10 @@
     },
     "files":
     [
-        "../res/output_Adventures_of_Huckleberry_Fin.txt",
-        "../res/output_Great_Expectations.txt",
-        "../res/output_Pride_and_Prejudice.txt",
-        "../res/output_Time_Machine.txt",
-        "../res/output_dracula.txt"
+        "../../res/output_Adventures_of_Huckleberry_Fin.txt",
+        "../../res/output_Great_Expectations.txt",
+        "../../res/output_Pride_and_Prejudice.txt",
+        "../../res/output_Time_Machine.txt",
+        "../../res/output_dracula.txt"
     ]
 }

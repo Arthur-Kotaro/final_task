@@ -7,7 +7,7 @@
 #define DEFAULT_MAX_RESPONSE 5
 #define DEFAULT_UPDATE_INTERVAL 5
 
-const std::string exe_version = "0.1";
+const std::string app_version = "0.1";
 const std::string conf_path = "config.json";
 const std::string answ_path = "answers.json";
 const std::string req_path = "requests.json";
@@ -52,12 +52,12 @@ public:
 class ConverterJSON
 {
     nlohmann::json config_dict, requests_dict;
-    std::string app_name, app_version;
+    std::string config_app_name, config_app_version;
     unsigned int max_responses, update_interval;
     std::vector<std::string> files;
 
     bool CheckVersion();
-    static void TxtVersionToInt(std::string str_app_version, std::vector<int> & int_app_version);
+    static void TxtVersionToInt(const std::string & str_app_version, std::vector<int> & int_app_version);
 
 public:
     [[nodiscard]] std::vector<std::string> GetTextDocuments() const;

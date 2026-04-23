@@ -1,5 +1,10 @@
 #include "search_server.hpp"
+#include <iostream>
 #include <future>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <vector>
 
 bool Entry::operator==(const Entry & other) const
 {
@@ -14,7 +19,11 @@ InvertedIndex::InvertedIndex(ConverterJSON * _ConverterJSON)
 void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
 {
     docs = std::move(input_docs);
-    if(docs.empty()) return;
+    if(docs.empty())
+    {
+        freq_dictionary = std::make_unique<std::map<std::string, std::vector<Entry>>>();
+        return;
+    }
     std::vector<std::future<std::unique_ptr<std::map<std::string, std::vector<Entry>>>>> index_future;
     std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> index_for_each_file;
     index_future.reserve(docs.size());
@@ -117,8 +126,9 @@ void InvertedIndex::MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<
 
 std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word) const
 {
-	auto it = freq_dictionary->find(word);
-  if(it == freq_dictionary->end()) return {};
+    if(!freq_dictionary) return {};
+    auto it = freq_dictionary->find(word);
+    if(it == freq_dictionary->end()) return {};
 	return it->second;
 }
 
@@ -192,64 +202,71 @@ size_t SearchServer::FindMaxAbsoluteRelevance(const std::list<AbsoluteIndex> & d
 
 std::vector<std::vector<RelativeIndex>> SearchServer::Search(const std::vector<std::string>& queries_input) const
 {
-    std::vector<std::list<SearchTerm>> parsed_requests = ParseRequest(queries_input);
-    std::vector<std::list<AbsoluteIndex>> relevant_docs(parsed_requests.size());
-
-    for(size_t request = 0; request < parsed_requests.size(); ++request)
+    if(!queries_input.empty())
     {
-        if (!parsed_requests[request].empty())
+        std::vector<std::list<SearchTerm>> parsed_requests = ParseRequest(queries_input);
+        std::vector<std::list<AbsoluteIndex>> relevant_docs(parsed_requests.size());
+
+        for(size_t request = 0; request < parsed_requests.size(); ++request)
         {
-            const auto & entry_vec = _index->GetWordCount(parsed_requests[request].begin().operator->()->term);
-            std::list<AbsoluteIndex> relevant_docs_list;
-            if (!entry_vec.empty())
+            if (!parsed_requests[request].empty())
             {
-                for (const auto term_entry: entry_vec)
+                const auto & entry_vec = _index->GetWordCount(parsed_requests[request].begin().operator->()->term);
+                std::list<AbsoluteIndex> relevant_docs_list;
+                if (!entry_vec.empty())
                 {
-                    relevant_docs_list.emplace_back(AbsoluteIndex{term_entry.docID, term_entry.count});
-                }
-                for (auto & search_word = ++(parsed_requests[request].begin()); search_word != parsed_requests[request].end() ; ++search_word)
-                {
-                    const auto & entries = _index->GetWordCount(search_word.operator->()->term);
-                    if (!entries.empty())
+                    for (const auto term_entry: entry_vec)
                     {
-                        for (auto & iter : entries)
+                        relevant_docs_list.emplace_back(AbsoluteIndex{term_entry.docID, term_entry.count});
+                    }
+                    for (auto & search_word = ++(parsed_requests[request].begin()); search_word != parsed_requests[request].end() ; ++search_word)
+                    {
+                        const auto & entries = _index->GetWordCount(search_word.operator->()->term);
+                        if (!entries.empty())
                         {
-                            for (auto & relevant_doc : relevant_docs_list)
+                            for (auto & iter : entries)
                             {
-                                if (iter.docID == relevant_doc.docID)
+                                for (auto & relevant_doc : relevant_docs_list)
                                 {
-                                    relevant_doc.absolute_relevance += iter.count;
-                                    break;
+                                    if (iter.docID == relevant_doc.docID)
+                                    {
+                                        relevant_doc.absolute_relevance += iter.count;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
+                relevant_docs[request] = std::move(relevant_docs_list);
             }
-            relevant_docs[request] = std::move(relevant_docs_list);
         }
-    }
-    //sort relevant_docs in descending order
-    for (auto & lst : relevant_docs)
-    {
-        lst.sort([](const AbsoluteIndex & a, const AbsoluteIndex & b)
-            {
-            return a.absolute_relevance > b.absolute_relevance;
-            });
-    }
-    std::vector<std::vector<RelativeIndex>> result(relevant_docs.size());
-    //count relative relevance
-    for (size_t list_idx = 0; list_idx < relevant_docs.size(); ++list_idx)
-    {
-        size_t max = FindMaxAbsoluteRelevance(relevant_docs[list_idx]);
-        if (max)
+        //sort relevant_docs in descending order
+        for (auto & lst : relevant_docs)
         {
-            for(auto & doc : relevant_docs[list_idx])
+            lst.sort([](const AbsoluteIndex & a, const AbsoluteIndex & b)
             {
-                result[list_idx].emplace_back(RelativeIndex{doc.docID, static_cast<float>(doc.absolute_relevance) / static_cast<float>(max)});
+                return a.absolute_relevance > b.absolute_relevance;
+            });
+        }
+        std::vector<std::vector<RelativeIndex>> result(relevant_docs.size());
+        //count relative relevance
+        for (size_t list_idx = 0; list_idx < relevant_docs.size(); ++list_idx)
+        {
+            size_t max = FindMaxAbsoluteRelevance(relevant_docs[list_idx]);
+            if (max)
+            {
+                for(auto & doc : relevant_docs[list_idx])
+                {
+                    result[list_idx].emplace_back(RelativeIndex{doc.docID, static_cast<float>(doc.absolute_relevance) / static_cast<float>(max)});
+                }
             }
         }
+	    return result;
     }
-	return result;
+    else 
+    {
+        std::cerr << "Warning: there is nothing to seek." << std::endl;
+        return std::vector<std::vector<RelativeIndex>>();
+    }
 }
