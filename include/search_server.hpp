@@ -25,35 +25,42 @@ struct SearchTerm
     size_t count;
 };
 
-
 class InvertedIndex
 {
 private:
     std::vector<std::string> docs;
-    std::unique_ptr<std::map<std::string, std::vector<Entry>>> freq_dictionary;
+    std::map<std::string, std::vector<Entry>>* freq_dictionary; // raw pointer
 
-    static std::unique_ptr<std::map<std::string, std::vector<Entry>>> SeparateIndexing(int _doc_id, const std::string & txt_file_content);
-    static void MergeAuxiliaryMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &auxiliary_maps, unsigned int hardware_threads);
-    static void MergeTwoSeparatedMaps(std::vector<std::unique_ptr<std::map<std::string, std::vector<Entry>>>> &sep_index_vec, size_t dst, size_t src);
+    static std::map<std::string, std::vector<Entry>>* SeparateIndexing(int _doc_id, const std::string & txt_file_content);
+    static void MergeAuxiliaryMaps(std::vector<std::map<std::string, std::vector<Entry>>*>& auxiliary_maps, unsigned int hardware_threads);
+    static void MergeTwoSeparatedMaps(std::vector<std::map<std::string, std::vector<Entry>>*>& sep_index_vec, size_t dst, size_t src);
     static void MergeTwoSortedIndexVec(std::vector<Entry> &dst, std::vector<Entry> &src);
 
 public:
-    InvertedIndex() = default;
-    explicit InvertedIndex(ConverterJSON * _converter_json);
-    ~InvertedIndex() = default;
+    InvertedIndex();
+    explicit InvertedIndex(ConverterJSON* _converter_json);
+    ~InvertedIndex();
+
+    // Prevent a copying
+    InvertedIndex(const InvertedIndex&) = delete;
+    InvertedIndex& operator=(const InvertedIndex&) = delete;
+
+    // Permit a movement
+    InvertedIndex(InvertedIndex&& other) noexcept;
+    InvertedIndex& operator=(InvertedIndex&& other) noexcept;
+
     void UpdateDocumentBase(std::vector<std::string> input_docs);
     std::vector<Entry> GetWordCount(const std::string &word) const;
 };
 
-
 class SearchServer
 {
 private:
-	InvertedIndex* _index; 
+    InvertedIndex* _index;
     [[nodiscard]] std::vector<std::list<SearchTerm>> ParseRequest(const std::vector<std::string>& queries_input) const;
     static size_t FindMaxAbsoluteRelevance(const std::list<AbsoluteIndex>& doc_list);
 
 public:
-	explicit SearchServer(InvertedIndex* idx): _index(idx) {}
-	[[nodiscard]] std::vector<std::vector<RelativeIndex>> Search(const std::vector<std::string>& queries_input) const;
+    explicit SearchServer(InvertedIndex* idx) : _index(idx) {}
+    [[nodiscard]] std::vector<std::vector<RelativeIndex>> Search(const std::vector<std::string>& queries_input) const;
 };
