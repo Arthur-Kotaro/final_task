@@ -55,6 +55,11 @@ cmake --build build_release
 ```bash
 cmake --build build_debug
 ```
+6) Скопировать исполняемый файл search_engine в директорию, из которой будет запускаться программа:
+
+```bash
+cp /build_release/src/earch_engine target_dir/
+```
 
 # Краткое руководство пользователя
 Запуск приложения осущ..
