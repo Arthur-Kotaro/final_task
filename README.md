@@ -26,13 +26,14 @@
 git clone git@github.com:Arthur-Kotaro/search_engine.git
 ```
 
-3) Перейти в корневой каталог:
+3) Перейти в корневой каталог проекта:
 
 ```bash
 cd search_engine
 ```
 
 4) Сгенерировать кэш:
+
 Для конфигурации release:
 ```bash
 cmake -S . -B build_release -DCMAKE_BUILD_TYPE=Release
@@ -44,6 +45,7 @@ cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug
 ```
 
 5) Скомпилировать и собрать проект:
+
 В конфигурации release:
 ```bash
 cmake --build build_release
