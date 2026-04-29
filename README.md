@@ -123,3 +123,132 @@ cp /build_release/src/search_engine target_dir/
 
 Пример описания файла answers.json:
 
+
+```json
+{
+    "answers": {
+        "request001": {
+            "result": false
+        },
+        "request002": {
+            "relevance": [
+                {
+                    "docID": 2,
+                    "rank": 1.0
+                },
+                {
+                    "docID": 0,
+                    "rank": 0.5
+                },
+                {
+                    "docID": 4,
+                    "rank": 0.44999998807907104
+                }
+            ],
+            "result": true
+        },
+        "request003": {
+            "relevance": [
+                {
+                    "docID": 0,
+                    "rank": 1.0
+                },
+                {
+                    "docID": 2,
+                    "rank": 0.8409090638160706
+                },
+                {
+                    "docID": 1,
+                    "rank": 0.8295454382896423
+                },
+                {
+                    "docID": 4,
+                    "rank": 0.5681818127632141
+                },
+                {
+                    "docID": 3,
+                    "rank": 0.46590909361839294
+                }
+            ],
+            "result": true
+        },
+        "request004": {
+            "relevance": [
+                {
+                    "docID": 4,
+                    "rank": 1.0
+                },
+                {
+                    "docID": 3,
+                    "rank": 0.3529411852359772
+                },
+                {
+                    "docID": 0,
+                    "rank": 0.05882352963089943
+                }
+            ],
+            "result": true
+        },
+        "request005": {
+            "relevance": [
+                {
+                    "docID": 3,
+                    "rank": 1.0
+                },
+                {
+                    "docID": 1,
+                    "rank": 0.5394737124443054
+                },
+                {
+                    "docID": 2,
+                    "rank": 0.3552631437778473
+                },
+                {
+                    "docID": 4,
+                    "rank": 0.25
+                },
+                {
+                    "docID": 0,
+                    "rank": 0.14473684132099152
+                }
+            ],
+            "result": true
+        },
+        "request006": {
+            "relevance": [
+                {
+                    "docID": 1,
+                    "rank": 1.0
+                }
+            ],
+            "result": true
+        },
+        "request007": {
+            "relevance": [
+                {
+                    "docID": 2,
+                    "rank": 1.0
+                },
+                {
+                    "docID": 0,
+                    "rank": 0.8600000143051147
+                },
+                {
+                    "docID": 1,
+                    "rank": 0.6600000262260437
+                },
+                {
+                    "docID": 4,
+                    "rank": 0.5400000214576721
+                },
+                {
+                    "docID": 3,
+                    "rank": 0.5
+                }
+            ],
+            "result": true
+        }
+    }
+}
+
+```
