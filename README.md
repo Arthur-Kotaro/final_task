@@ -73,7 +73,31 @@ cp /build_release/src/search_engine target_dir/
 
 
 # Структура файла config.json
+Конфигурационный файл содержит название поискового движка, его версию, интервалы времени, через которые обновляется поисковая база (чтение текстовых файлов и переиндексирование базы), максимальное количество файлов в ответе (если не указано, то значение выбирается равным пяти).
 
+В поле "files" содержится список абсолютных или относительных путей к файлам с данными.
+
+Пример содержимого файла config.json:
+
+```json
+{
+    "config":
+    {
+        "name":        "SimpleTXTSearchEngine",
+        "version":     "0.1",
+        "max_responses": 5,
+        "update_interval": 10
+    },
+    "files":
+    [
+        "../../res/output_Adventures_of_Huckleberry_Fin.txt",
+        "../../res/output_Great_Expectations.txt",
+        "../../res/output_Pride_and_Prejudice.txt",
+        "../../res/output_Time_Machine.txt",
+        "../../res/output_dracula.txt"
+    ]
+}
+```
 
 # Структура файла requests.json
 
