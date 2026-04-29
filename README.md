@@ -23,12 +23,15 @@
 1) Клонировать репозиторий проекта:
 
 ```git clone git@github.com:Arthur-Kotaro/final_task.git```
+
 3) Перейти в корневой каталог:
 
 ```cd final_task```
+
 4) Сгенерировать кэш:
 
 ```cmake -S . -B build```
+
 5) Скомпилировать и собрать проект:
 
 ```cmake --build build```
