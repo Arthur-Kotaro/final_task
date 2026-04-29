@@ -100,6 +100,26 @@ cp /build_release/src/search_engine target_dir/
 ```
 
 # Структура файла requests.json
+Файл запросов содержит единственное поле "requests". Значением поля является список строк, каждая из которых представляет собой отдельный поисковый запрос.
 
+Пример содержимого файла requests.json:
+
+```json
+{
+        "requests" : [
+                "apple pen penapple",
+                "he saw her in her room",
+                "sarcastic humor mr bennet william and lady lucas",
+                "dracula british museum black moustaches london anywhere along carpathians",
+                "have been work upon young man time traveller",
+                "tremendous dip black hair charackter church",
+                "that book made mr mark twain"
+        ]
+}
+```
 
 # Структура файла answers.json
+ В файл answers.json записываются результаты работы поискового движка. Если файл уже существует, при очередном запросе файл будет перезаписан.
+
+Пример описания файла answers.json:
+
