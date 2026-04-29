@@ -23,25 +23,35 @@
 1) Клонировать репозиторий проекта:
 
 ```bash
-git clone git@github.com:Arthur-Kotaro/final_task.git
+git clone git@github.com:Arthur-Kotaro/search_engine.git
 ```
 
 3) Перейти в корневой каталог:
 
 ```bash
-cd final_task
+cd search_engine
 ```
 
 4) Сгенерировать кэш:
-
+Для конфигурации release:
 ```bash
-cmake -S . -B build
+cmake -S . -B build_release -DCMAKE_BUILD_TYPE=Release
+```
+
+Для конфигурации debug:
+```bash
+cmake -S . -B build_debug -DCMAKE_BUILD_TYPE=Debug
 ```
 
 5) Скомпилировать и собрать проект:
-
+В конфигурации release:
 ```bash
-cmake --build build
+cmake --build build_release
+```
+
+В конфигурации debug:
+```bash
+cmake --build build_debug
 ```
 
 # Краткое руководство пользователя
