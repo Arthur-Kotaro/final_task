@@ -22,7 +22,8 @@
 Порядок сборки:
 1) Клонировать репозиторий проекта:
 
-```git clone git@github.com:Arthur-Kotaro/final_task.git```
+```bash
+git clone git@github.com:Arthur-Kotaro/final_task.git```
 
 3) Перейти в корневой каталог:
 
