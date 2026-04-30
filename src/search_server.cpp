@@ -21,8 +21,7 @@ InvertedIndex::~InvertedIndex()
 }
 
 InvertedIndex::InvertedIndex(InvertedIndex&& other) noexcept
-    : docs(std::move(other.docs))
-    , freq_dictionary(other.freq_dictionary)
+    : docs(std::move(other.docs)), freq_dictionary(other.freq_dictionary)
 {
     other.freq_dictionary = nullptr;
 }
@@ -65,11 +64,10 @@ void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
     }
 
     // Sort in descending order
-    std::sort(begin(index_for_each_file), end(index_for_each_file),
-              [](const auto* left, const auto* right) -> bool
-              {
-                  return left->size() > right->size();
-              });
+    std::sort(begin(index_for_each_file), end(index_for_each_file), [](const auto* left, const auto* right) -> bool
+    {
+        return left->size() > right->size();
+    });
 
     const unsigned int hardware_threads = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 2;
     MergeAuxiliaryMaps(index_for_each_file, hardware_threads);
@@ -84,31 +82,27 @@ void InvertedIndex::UpdateDocumentBase(std::vector<std::string> input_docs)
     index_for_each_file.clear();
 }
 
-std::map<std::string, std::vector<Entry>>* InvertedIndex::SeparateIndexing(int _docID, const std::string & txt_file_content)
+std::map<std::string, std::vector<Entry>>* InvertedIndex::SeparateIndexing(int _docID, const std::string& txt_file_content)
 {
-    auto* separated_map = new std::map<std::string, std::vector<Entry>>();
-    const char* start    = txt_file_content.c_str();
-    const char* end      = start + txt_file_content.size();
-    const char* iterator = start;
-    while (iterator < end)
+    auto* separated_map = new std::map<std::string, std::vector<Entry>>();    
+    size_t pos = 0;
+    const size_t length = txt_file_content.length();
+    
+    while (pos < length)
     {
-        while (iterator < end && !std::isalpha(static_cast<unsigned char>(*iterator))) ++iterator;
-        start = iterator;
-        while (iterator < end && std::isalpha(static_cast<unsigned char>(*iterator))) ++iterator;
-        if (start == iterator) continue;
-        std::string word(start, iterator);
-        std::transform(word.begin(), word.end(), word.begin(),
-                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        while (pos < length && !std::isalpha(static_cast<unsigned char>(txt_file_content[pos]))) ++pos;
+        if (pos >= length) break;
+        size_t word_start = pos;
+        while (pos < length && std::isalpha(static_cast<unsigned char>(txt_file_content[pos]))) ++pos;
+        std::string word = txt_file_content.substr(word_start, pos - word_start);
+        std::transform(word.begin(), word.end(), word.begin(), [](unsigned char c) {return static_cast<char>(std::tolower(c));});
+        
         auto map_iterator = separated_map->find(word);
+        
         if (map_iterator == separated_map->end())
-        {
-            separated_map->emplace(word, std::vector<Entry>{ Entry{ static_cast<size_t>(_docID), 1 } });
-        }
-        else
-        {
-            map_iterator->second[0].count++;
-        }
-    }
+            separated_map->emplace(word, std::vector<Entry>{ Entry{static_cast<size_t>(_docID), 1} });
+        else map_iterator->second[0].count++;
+    } 
     return separated_map;
 }
 
@@ -136,7 +130,7 @@ void InvertedIndex::MergeAuxiliaryMaps(std::vector<std::map<std::string, std::ve
         MergeAuxiliaryMaps(auxiliary_maps, hardware_threads);
 }
 
-void InvertedIndex::MergeTwoSeparatedMaps(std::vector<std::map<std::string, std::vector<Entry>>*>& sep_index_vec,
+void InvertedIndex::MergeTwoSeparatedMaps(std::vector<std::map<std::string, std::vector<Entry>>*> & sep_index_vec,
                                           size_t dst, size_t src)
 {
     auto* dst_map = sep_index_vec[dst];
@@ -166,10 +160,8 @@ void InvertedIndex::MergeTwoSortedIndexVec(std::vector<Entry>& dst, std::vector<
     size_t i = 0, j = 0;
     while (i < dst.size() && j < src.size())
     {
-        if (dst[i].docID < src[j].docID)
-            out.push_back(std::move(dst[i++]));
-        else if (dst[i].docID > src[j].docID)
-            out.push_back(std::move(src[j++]));
+        if (dst[i].docID < src[j].docID)      out.push_back(std::move(dst[i++]));
+        else if (dst[i].docID > src[j].docID) out.push_back(std::move(src[j++]));
         else
         {
             // Summarize counts for common docID
@@ -187,6 +179,7 @@ void InvertedIndex::MergeTwoSortedIndexVec(std::vector<Entry>& dst, std::vector<
 std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word) const
 {
     if (!freq_dictionary) return {};
+
     auto it = freq_dictionary->find(word);
     if (it == freq_dictionary->end()) return {};
     return it->second;
@@ -196,42 +189,45 @@ std::vector<Entry> InvertedIndex::GetWordCount(const std::string &word) const
 
 std::vector<std::list<SearchTerm>> SearchServer::ParseRequest(const std::vector<std::string>& queries_input) const
 {
-    std::vector<std::list<SearchTerm>> parsed_requests(queries_input.size());
+    std::vector<std::list<SearchTerm>> parsed_requests(queries_input.size());    
     for (size_t lineIndex = 0; lineIndex < queries_input.size(); ++lineIndex)
     {
-        if (!queries_input[lineIndex].empty())
-        {
-            std::list<SearchTerm> lst;
-            const char* start    = queries_input[lineIndex].c_str();
-            const char* end      = start + queries_input[lineIndex].size();
-            const char* iterator = start;
-            while (iterator < end)
+        const std::string& line = queries_input[lineIndex];
+        if (line.empty()) continue;
+        
+        std::list<SearchTerm> lst;
+        size_t pos = 0;
+        const size_t len = line.size();
+        
+        while (pos < len)
+        { 
+            while (pos < len && !std::isalpha(static_cast<unsigned char>(line[pos]))) ++pos;
+            if (pos >= len) break;
+            
+            size_t start = pos;
+            while (pos < len && std::isalpha(static_cast<unsigned char>(line[pos]))) ++pos;
+            
+            std::string word = line.substr(start, pos - start);
+            std::transform(word.begin(), word.end(), word.begin(),[](unsigned char c)
+                    { return static_cast<char>(std::tolower(c)); });
+            
+            auto it = std::find_if(lst.begin(), lst.end(), [&](const SearchTerm& trm) { return trm.term == word; });
+            
+            if (it == lst.end())
             {
-                while (iterator < end && !std::isalpha(static_cast<unsigned char>(*iterator))) ++iterator;
-                start = iterator;
-                while (iterator < end && std::isalpha(static_cast<unsigned char>(*iterator))) ++iterator;
-                if (start == iterator) continue;
-                std::string word(start, iterator);
-                std::transform(word.begin(), word.end(), word.begin(),
-                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                auto it = std::find_if(lst.begin(), lst.end(),
-                                       [&](const SearchTerm& trm) { return trm.term == word; });
-                if (it == lst.end())
-                {
-                    size_t cnt = 0;
-                    auto entry_vec = _index->GetWordCount(word);
-                    for (const auto& e : entry_vec) cnt += e.count;
-                    if (cnt == 0) continue;
-                    SearchTerm tmp{ word, cnt };
-                    // Insertion with maintaining count's decreasing sorting
-                    auto pos = std::find_if(lst.begin(), lst.end(),
-                                            [&tmp](const SearchTerm& t) { return t.count < tmp.count; });
-                    lst.insert(pos, tmp);
-                }
+                size_t cnt = 0;
+                auto entry_vec = _index->GetWordCount(word);
+                for (const auto & e : entry_vec) cnt += e.count;
+                if (cnt == 0) continue;   
+                SearchTerm tmp{word, cnt};
+                
+                // Insertion with maintaining count's decreasing sorting
+                auto pos_it = std::find_if(lst.begin(), lst.end(), [&tmp](const SearchTerm& t) { return t.count < tmp.count; });
+                lst.insert(pos_it, tmp);
             }
-            parsed_requests[lineIndex] = std::move(lst);
         }
-    }
+        parsed_requests[lineIndex] = std::move(lst);
+    } 
     return parsed_requests;
 }
 

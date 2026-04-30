@@ -10,5 +10,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(JSON_BuildTest OFF CACHE INTERNAL "")
 set(gtest_disable_pthreadson)
 
+set(CMAKE_CXX_FLAGS_RELEASE "-03 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG   "-03 -DDEBUG" )
+
+
 add_subdirectory(src)
 add_subdirectory(tests)
