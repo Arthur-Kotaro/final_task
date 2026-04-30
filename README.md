@@ -266,7 +266,11 @@ cp /build_release/src/search_engine target_dir/
 ```
 # Ошибки и уведомления
 
-- *file "config.json" is missing* – в директории с исполняемым файлом отсутствует файл config.json.
+- *File "config.json" is missing* – в директории с исполняемым файлом отсутствует файл config.json.
+
+- *File "config.json" is empty* – файл config.json пуст.
+
+- *Incompatible version of the "config.json\. Check the configuration or install an actual version of the application* – версия указанная в файле config.json не соответсвует версии поискового движка.
 
 - *Warning: file "requests.json" can't be open.* – в директории с исполняемым файлом отсутствует файл requests.json.
 
