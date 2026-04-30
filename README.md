@@ -264,9 +264,15 @@ cp /build_release/src/search_engine target_dir/
 }
 
 ```
-# Ошибки
+# Ошибки и уведомления
 
 - *file "config.json" is missing* – в директории с исполняемым файлом отсутствует файл config.json.
 
 - *Warning: file "requests.json" can't be open.* – в директории с исполняемым файлом отсутствует файл requests.json.
+
+- *Warning: file file_name can't be open.* – Файл с данными *file_name* не может быть прочитан. Возможно, указан неправильный путь.
+
+- *Warning: file req_path can't be open.* – Файл запросов лежащий в *req_path* не может быть прочитан.
+
+- *Warning: file req_path is empty.* – Файл запросов лежащий в *req_path* пуст.
 
