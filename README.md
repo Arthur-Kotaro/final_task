@@ -269,6 +269,8 @@ cp /build_release/src/search_engine target_dir/
 - *file "config.json" is missing* – в директории с исполняемым файлом отсутствует файл config.json.
 
 - *Warning: file "requests.json" can't be open.
+
 Warning: there is nothing to seek.
+
 Warning: there is nothing to save.* – в директории с исполняемым файлом отсутствует файл requests.json.
 
